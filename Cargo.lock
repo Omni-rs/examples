@@ -1306,38 +1306,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "evm-example-advanced-signing"
-version = "0.0.1"
-dependencies = [
- "near-sdk",
- "omni-transaction",
-]
-
-[[package]]
-name = "evm-example-multiple-encoding"
-version = "0.0.1"
-dependencies = [
- "near-sdk",
- "omni-transaction",
-]
-
-[[package]]
-name = "evm-example-multiple-signing"
-version = "0.0.1"
-dependencies = [
- "near-sdk",
- "omni-transaction",
-]
-
-[[package]]
-name = "evm-example-simple-signing"
-version = "0.0.1"
-dependencies = [
- "near-sdk",
- "omni-transaction",
-]
-
-[[package]]
 name = "evm-simple-encoding"
 version = "0.0.1"
 dependencies = [
@@ -2738,46 +2706,6 @@ dependencies = [
  "serde_json",
  "subtle",
  "thiserror",
-]
-
-[[package]]
-name = "near-example-advanced-signing"
-version = "0.0.1"
-dependencies = [
- "near-sdk",
- "omni-transaction",
-]
-
-[[package]]
-name = "near-example-multiple-encoding"
-version = "0.0.1"
-dependencies = [
- "near-sdk",
- "omni-transaction",
-]
-
-[[package]]
-name = "near-example-multiple-signing"
-version = "0.0.1"
-dependencies = [
- "near-sdk",
- "omni-transaction",
-]
-
-[[package]]
-name = "near-example-simple-encoding"
-version = "0.0.1"
-dependencies = [
- "near-sdk",
- "omni-transaction",
-]
-
-[[package]]
-name = "near-example-simple-signing"
-version = "0.0.1"
-dependencies = [
- "near-sdk",
- "omni-transaction",
 ]
 
 [[package]]
