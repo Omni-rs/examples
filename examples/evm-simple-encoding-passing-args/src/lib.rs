@@ -18,9 +18,9 @@ impl Contract {
     pub fn get_transaction_encoded_data(&self, evm_tx_params: EVMTransaction) -> Vec<u8> {
         let evm_tx = TransactionBuilder::new::<EVM>()
             .nonce(evm_tx_params.nonce)
-            .to(evm_tx_params.to.expect("Missing 'to' address"))
+            .to(evm_tx_params.to.expect("to address is required"))
             .value(evm_tx_params.value)
-            .input(evm_tx_params.input.clone())
+            .input(evm_tx_params.input)
             .max_priority_fee_per_gas(evm_tx_params.max_priority_fee_per_gas)
             .max_fee_per_gas(evm_tx_params.max_fee_per_gas)
             .gas_limit(evm_tx_params.gas_limit)
