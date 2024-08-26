@@ -1317,6 +1317,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "evm-simple-encoding-passing-args"
+version = "0.0.1"
+dependencies = [
+ "near-sdk",
+ "near-workspaces",
+ "omni-transaction",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "evm-simple-signing"
+version = "0.0.1"
+dependencies = [
+ "near-sdk",
+ "near-workspaces",
+ "omni-transaction",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "evm-simple-signing-and-propagating"
+version = "0.0.1"
+dependencies = [
+ "near-sdk",
+ "near-workspaces",
+ "omni-transaction",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "eyre"
 version = "0.6.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3326,12 +3359,13 @@ dependencies = [
 [[package]]
 name = "omni-transaction"
 version = "0.1.0"
-source = "git+https://github.com/edsonalcala/omni-transaction-rs.git?branch=master#1b0488c7ba912cf41d26b5b05f874eaeff5a3594"
+source = "git+https://github.com/edsonalcala/omni-transaction-rs.git?branch=fix-serializing-issues#05735fd0539d88bfa42c8acbc5f88fc7a8dd843b"
 dependencies = [
  "borsh",
  "hex",
  "near-sdk",
  "rlp",
+ "serde-big-array",
 ]
 
 [[package]]
@@ -4323,6 +4357,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99fce0ffe7310761ca6bf9faf5115afbc19688edd00171d81b1bb1b116c63e09"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-big-array"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11fc7cc2c76d73e0f27ee52abbd64eec84d46f370c88371120433196934e4b7f"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

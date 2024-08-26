@@ -15,7 +15,7 @@ publish = false
 
 [workspace.dependencies]
 near-sdk = "5.1.0"
-omni-transaction = { git = "https://github.com/edsonalcala/omni-transaction-rs.git", branch = "master" }
+omni-transaction = { git = "https://github.com/edsonalcala/omni-transaction-rs.git", branch = "fix-serializing-issues" }
 near-workspaces = { version = "0.12.0", features = [
     "experimental",
     "unstable",
