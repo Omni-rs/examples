@@ -658,9 +658,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.1.14"
+version = "1.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50d2eb3cd3d1bf4529e31c215ee6f93ec5a3d536d9f578f93d9d33ee19562932"
+checksum = "57b6a275aa2903740dc87da01c62040406b8812552e97129a63ea8850a17c6e6"
 dependencies = [
  "jobserver",
  "libc",
@@ -1331,6 +1331,7 @@ dependencies = [
 name = "evm-simple-encoding-with-signature"
 version = "0.0.1"
 dependencies = [
+ "hex",
  "near-sdk",
  "near-workspaces",
  "omni-transaction",
@@ -3370,7 +3371,7 @@ dependencies = [
 [[package]]
 name = "omni-transaction"
 version = "0.1.0"
-source = "git+https://github.com/edsonalcala/omni-transaction-rs.git?branch=fix-serializing-issues#05735fd0539d88bfa42c8acbc5f88fc7a8dd843b"
+source = "git+https://github.com/edsonalcala/omni-transaction-rs.git?branch=fix-serializing-issues#290beae96163ecde54cb6d6b22dd468103bb358c"
 dependencies = [
  "borsh",
  "hex",

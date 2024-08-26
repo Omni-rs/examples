@@ -24,3 +24,4 @@ near-sdk = { version = "5.3.0", features = ["unit-testing"] }
 near-workspaces.workspace = true
 tokio.workspace = true
 serde_json.workspace = true
+hex.workspace = true
