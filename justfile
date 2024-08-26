@@ -15,5 +15,5 @@ check-wasm:
     cargo check --target wasm32-unknown-unknown
     
 # Run example
-run-example:
-    
+run PROJECT:
+    cargo test -p {{PROJECT}} -- --nocapture

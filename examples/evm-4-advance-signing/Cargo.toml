@@ -1,5 +1,5 @@
 [package]
-name = "near-example-simple-encoding"
+name = "evm-example-advanced-signing"
 publish.workspace = true
 version.workspace = true
 edition.workspace = true

@@ -22,9 +22,23 @@ $ just run --example evm-simple-signing
 
 Each example is structured in the following way:
 
-
 ## Examples
 
-[ ] EVM: Simple encoding
+This repository contains the following examples:
 
-[ ] EVM: Multiple encoding
+### EVM
+
+- [x] [Simple encoding](./evm-0-simple-encoding)
+- [x] [Multiple encoding](./evm-1-multiple-encoding)
+- [x] [Simple signing](./evm-2-simple-signing)
+- [x] [Multiple signing](./evm-3-multiple-signing)
+- [x] [Advance signing](./evm-4-advance-signing)
+
+### NEAR
+
+- [x] [Simple encoding](./near-0-simple-encoding)
+- [x] [Multiple encoding](./near-1-multiple-encoding)
+- [x] [Simple signing](./near-2-simple-signing)
+- [x] [Multiple signing](./near-3-multiple-signing)
+- [x] [Advance signing](./near-4-advance-signing)
+

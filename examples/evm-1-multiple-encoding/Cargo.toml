@@ -1,5 +1,5 @@
 [package]
-name = "near-example-simple-encoding"
+name = "evm-example-multiple-encoding"
 publish.workspace = true
 version.workspace = true
 edition.workspace = true
@@ -15,9 +15,3 @@ workspace = true
 [dependencies]
 near-sdk.workspace = true
 omni-transaction.workspace = true
-
-[dev-dependencies]
-near-sdk.workspace = true
-# near-workspaces.workspace = true
-# tokio.workspace = true
-# serde_json.workspace = true
