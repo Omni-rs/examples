@@ -1328,6 +1328,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "evm-simple-encoding-with-signature"
+version = "0.0.1"
+dependencies = [
+ "near-sdk",
+ "near-workspaces",
+ "omni-transaction",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "evm-simple-signing"
 version = "0.0.1"
 dependencies = [
