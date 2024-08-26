@@ -2978,6 +2978,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "near-simple-encoding"
+version = "0.0.1"
+dependencies = [
+ "near-sdk",
+ "near-workspaces",
+ "omni-transaction",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "near-socialdb-client"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
