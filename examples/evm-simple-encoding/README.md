@@ -1,4 +1,4 @@
-# Simple Encoding Example
+# EVM: Simple Encoding Example
 
 This example shows how to generate transaction payloads within a Near smart contract.
 

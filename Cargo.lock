@@ -2318,7 +2318,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if 1.0.0",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -3024,6 +3024,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "near-simple-encoding-passing-args"
+version = "0.0.1"
+dependencies = [
+ "bs58 0.5.1",
+ "near-sdk",
+ "near-workspaces",
+ "omni-transaction",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "near-socialdb-client"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3361,7 +3373,7 @@ dependencies = [
 [[package]]
 name = "omni-transaction"
 version = "0.1.0"
-source = "git+https://github.com/edsonalcala/omni-transaction-rs.git?branch=fix-serializing-issues#290beae96163ecde54cb6d6b22dd468103bb358c"
+source = "git+https://github.com/edsonalcala/omni-transaction-rs.git?branch=fix-serializing-issues#ff5051b0f5373da21e01adbbde88c8daf17b5450"
 dependencies = [
  "borsh",
  "hex",
@@ -5696,7 +5708,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]

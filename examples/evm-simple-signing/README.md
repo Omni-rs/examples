@@ -1,4 +1,4 @@
-# Simple Signing Example
+# EVM: Simple Signing Example
 
 To run this example, run the following command from the root folder:
 
@@ -6,4 +6,4 @@ To run this example, run the following command from the root folder:
 $ just run evm-simple-signing
 ```
 
-## Description
+NOTE: This is WIP
