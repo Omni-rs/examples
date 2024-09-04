@@ -1,7 +1,10 @@
 use omni_transaction::{
-    near::types::{
-        AccessKey, AccessKeyPermission, Action, AddKeyAction, ED25519PublicKey, PublicKey,
-        TransferAction,
+    near::{
+        types::{
+            AccessKey, AccessKeyPermission, Action, AddKeyAction, ED25519PublicKey, PublicKey,
+            TransferAction,
+        },
+        utils::PublicKeyStrExt,
     },
     transaction_builder::{TransactionBuilder, TxBuilder},
     types::NEAR,
@@ -16,25 +19,18 @@ async fn test_simple_encoding_with_args_for_near() -> Result<(), Box<dyn std::er
     let contract = sandbox.dev_deploy(&contract_wasm).await?;
 
     let signer_id = "forgetful-parent.testnet";
-    let signer_public_key = "6E8sCci9badyRkXb3JoRpBj5p8C6Tw41ELDZoiihKEtp"; // ed25519:6E8sCci9badyRkXb3JoRpBj5p8C6Tw41ELDZoiihKEtp
-    let signer_public_key_as_bytes: [u8; 32] = bs58::decode(signer_public_key)
-        .into_vec()
-        .expect("Decoding failed")
-        .try_into()
-        .expect("Invalid length, expected 32 bytes");
+    let signer_public_key = "ed25519:6E8sCci9badyRkXb3JoRpBj5p8C6Tw41ELDZoiihKEtp"
+        .to_public_key()
+        .unwrap();
 
     let nonce = 1;
     let receiver_id = "forgetful-parent.testnet";
     let block_hash = "4reLvkAWfqk5fsqio1KLudk46cqRz9erQdaHkWZKMJDZ";
-    let block_hash_as_bytes = bs58::decode(block_hash)
-        .into_vec()
-        .expect("Decoding failed")
-        .try_into()
-        .expect("Invalid length, expected 32 bytes");
+    let block_hash_as_bytes = block_hash.to_block_hash().unwrap();
 
     let transfer_action = Action::Transfer(TransferAction { deposit: 1u128 });
     let add_key_action = Action::AddKey(Box::new(AddKeyAction {
-        public_key: PublicKey::ED25519(ED25519PublicKey(signer_public_key_as_bytes)),
+        public_key: signer_public_key.clone(),
         access_key: AccessKey {
             nonce: 0,
             permission: AccessKeyPermission::FullAccess,
@@ -45,9 +41,7 @@ async fn test_simple_encoding_with_args_for_near() -> Result<(), Box<dyn std::er
 
     let near_tx = TransactionBuilder::new::<NEAR>()
         .signer_id(signer_id.to_string())
-        .signer_public_key(PublicKey::ED25519(ED25519PublicKey(
-            signer_public_key_as_bytes,
-        )))
+        .signer_public_key(signer_public_key)
         .nonce(nonce)
         .receiver_id(receiver_id.to_string())
         .block_hash(block_hash_as_bytes)

@@ -1,5 +1,5 @@
 use near_sdk::near;
-use omni_transaction::near::types::{Action, PublicKey, TransferAction};
+use omni_transaction::near::types::{Action, BlockHash, PublicKey, TransferAction};
 use omni_transaction::transaction_builder::TransactionBuilder;
 use omni_transaction::transaction_builder::TxBuilder;
 use omni_transaction::types::NEAR;
@@ -29,7 +29,7 @@ impl Contract {
             .signer_public_key(PublicKey::SECP256K1(signer_public_key.into()))
             .nonce(nonce)
             .receiver_id(receiver_id.to_string())
-            .block_hash(block_hash)
+            .block_hash(BlockHash(block_hash))
             .actions(actions)
             .build();
 

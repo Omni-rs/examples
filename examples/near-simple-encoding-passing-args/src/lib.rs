@@ -20,9 +20,12 @@ impl Contract {
 #[cfg(test)]
 mod tests {
     use omni_transaction::{
-        near::types::{
-            AccessKey, AccessKeyPermission, Action, AddKeyAction, ED25519PublicKey, PublicKey,
-            TransferAction,
+        near::{
+            types::{
+                AccessKey, AccessKeyPermission, Action, AddKeyAction, BlockHash, ED25519PublicKey,
+                PublicKey, TransferAction,
+            },
+            utils::PublicKeyStrExt,
         },
         transaction_builder::{TransactionBuilder, TxBuilder},
         types::NEAR,
@@ -31,7 +34,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_transaction_encoded_data() {
+    fn test_get_transaction_encoded_data_using_bytes() {
         let contract = Contract::default();
 
         let signer_id = "alice.near";
@@ -47,7 +50,7 @@ mod tests {
             .signer_public_key(PublicKey::SECP256K1(signer_public_key.into()))
             .nonce(nonce)
             .receiver_id(receiver_id.to_string())
-            .block_hash(block_hash)
+            .block_hash(BlockHash(block_hash))
             .actions(actions)
             .build();
 
@@ -67,29 +70,20 @@ mod tests {
     }
 
     #[test]
-    fn test_get_transaction_encoded_data_2() {
+    fn test_get_transaction_encoded_data_using_strings() {
         let contract = Contract::default();
 
         let signer_id = "forgetful-parent.testnet";
-        let signer_public_key = "6E8sCci9badyRkXb3JoRpBj5p8C6Tw41ELDZoiihKEtp"; // ed25519:6E8sCci9badyRkXb3JoRpBj5p8C6Tw41ELDZoiihKEtp
-        let signer_public_key_as_bytes: [u8; 32] = bs58::decode(signer_public_key)
-            .into_vec()
-            .expect("Decoding failed")
-            .try_into()
-            .expect("Invalid length, expected 32 bytes");
-
+        let signer_public_key = "ed25519:6E8sCci9badyRkXb3JoRpBj5p8C6Tw41ELDZoiihKEtp";
         let nonce = 1;
         let receiver_id = "forgetful-parent.testnet";
-        let block_hash = "4reLvkAWfqk5fsqio1KLudk46cqRz9erQdaHkWZKMJDZ";
-        let block_hash_as_bytes = bs58::decode(block_hash)
-            .into_vec()
-            .expect("Decoding failed")
-            .try_into()
-            .expect("Invalid length, expected 32 bytes");
+        let block_hash = "4reLvkAWfqk5fsqio1KLudk46cqRz9erQdaHkWZKMJDZ"
+            .to_block_hash()
+            .unwrap();
 
         let transfer_action = Action::Transfer(TransferAction { deposit: 1u128 });
         let add_key_action = Action::AddKey(Box::new(AddKeyAction {
-            public_key: PublicKey::ED25519(ED25519PublicKey(signer_public_key_as_bytes)),
+            public_key: signer_public_key.to_public_key().unwrap(),
             access_key: AccessKey {
                 nonce: 0,
                 permission: AccessKeyPermission::FullAccess,
@@ -100,12 +94,10 @@ mod tests {
 
         let near_tx = TransactionBuilder::new::<NEAR>()
             .signer_id(signer_id.to_string())
-            .signer_public_key(PublicKey::ED25519(ED25519PublicKey(
-                signer_public_key_as_bytes,
-            )))
+            .signer_public_key(signer_public_key.to_public_key().unwrap())
             .nonce(nonce)
             .receiver_id(receiver_id.to_string())
-            .block_hash(block_hash_as_bytes)
+            .block_hash(block_hash)
             .actions(actions)
             .build();
 
@@ -124,8 +116,6 @@ mod tests {
             22, 166, 29, 193, 0, 0, 0, 0, 0, 0, 0, 0, 1,
         ];
 
-        println!("Encoded data {:?}", encoded_data);
-        println!("Expected data {:?}", expected_data);
         assert!(encoded_data.len() > 0);
         assert!(encoded_data == expected_data);
     }
