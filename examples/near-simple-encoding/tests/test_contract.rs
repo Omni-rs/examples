@@ -2,16 +2,21 @@ use serde_json::json;
 
 #[tokio::test]
 async fn test_contract_is_operational() -> Result<(), Box<dyn std::error::Error>> {
+    // Compile the contract
     let sandbox = near_workspaces::sandbox().await?;
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
+    // Deploy the contract
+
     let contract = sandbox.dev_deploy(&contract_wasm).await?;
 
+    // Call the contract
     let view_result = contract
         .view("get_transaction_encoded_data")
         .args_json(json!({}))
         .await?;
 
+    // Check the result
     let transaction_encoded_data: Vec<u8> = serde_json::from_slice(&view_result.result)?;
 
     let expected_data = vec![

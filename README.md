@@ -44,17 +44,15 @@ The recommendation is to go thought each example and read the annotated integrat
 
 ### EVM
 
-- [x] [Simple encoding](./evm-simple-encoding)
-- [x] [Simple encoding passing args](./evm-simple-encoding-passing-args)
-- [x] [Simple encoding with signature](./evm-simple-encoding-with-signature)
-- [x] [Simple signing](./evm-simple-signing)
-- [x] [Simple signing and propagating](./evm-simple-signing-and-propagating)
+- [x] [Simple encoding](./examples/evm-simple-encoding)
+- [x] [Simple encoding passing args](./examples/evm-simple-encoding-passing-args)
+- [x] [Simple encoding with signature](./examples/evm-simple-encoding-with-signature)
+- [ ] [Simple signing](#)
 
 ### NEAR
 
-- [x] [Simple encoding](./near-0-simple-encoding)
-- [ ] [Multiple encoding](./near-1-multiple-encoding)
-- [ ] [Simple signing](./near-2-simple-signing)
-- [ ] [Multiple signing](./near-3-multiple-signing)
-- [ ] [Advance signing](./near-4-advance-signing)
+- [x] [Simple encoding](./examples/near-simple-encoding)
+- [x] [Simple encoding passing args](./examples/near-simple-encoding-passing-args)
+- [ ] [Simple encoding with signature](#)
+- [ ] [Simple signing](#)
 
