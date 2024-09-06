@@ -6,13 +6,8 @@ use omni_transaction::transaction_builder::TxBuilder;
 use omni_transaction::types::EVM;
 
 #[near(contract_state)]
+#[derive(Default)]
 pub struct Contract {}
-
-impl Default for Contract {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 #[near]
 impl Contract {
@@ -39,7 +34,6 @@ impl Contract {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hex;
     use omni_transaction::evm::evm_transaction::EVMTransaction;
     use omni_transaction::evm::types::Signature;
     use omni_transaction::evm::utils::parse_eth_address;
@@ -97,7 +91,7 @@ mod tests {
             242, 51, 135, 125, 73, 43, 148, 238, 224, 197, 182, 209,
         ];
 
-        assert!(encoded_data.len() > 0);
+        assert!(!encoded_data.is_empty());
         assert_eq!(encoded_data, expected_data);
     }
 }

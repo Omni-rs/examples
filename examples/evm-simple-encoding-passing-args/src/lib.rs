@@ -5,13 +5,8 @@ use omni_transaction::transaction_builder::TxBuilder;
 use omni_transaction::types::EVM;
 
 #[near(contract_state)]
+#[derive(Default)]
 pub struct Contract {}
-
-impl Default for Contract {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 #[near]
 impl Contract {
@@ -71,7 +66,7 @@ mod tests {
             69, 135, 35, 134, 242, 111, 193, 0, 0, 128, 192,
         ];
 
-        assert!(encoded_data.len() > 0);
+        assert!(!encoded_data.is_empty());
         assert_eq!(encoded_data, expected_data);
     }
 }

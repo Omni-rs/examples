@@ -1,17 +1,13 @@
 use near_sdk::near;
+use omni_transaction::near::types::U128;
 use omni_transaction::near::types::{Action, BlockHash, PublicKey, TransferAction};
 use omni_transaction::transaction_builder::TransactionBuilder;
 use omni_transaction::transaction_builder::TxBuilder;
 use omni_transaction::types::NEAR;
 
 #[near(contract_state)]
+#[derive(Default)]
 pub struct Contract {}
-
-impl Default for Contract {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 #[near]
 impl Contract {
@@ -21,7 +17,7 @@ impl Contract {
         let nonce = 0;
         let receiver_id = "bob.near";
         let block_hash = [0u8; 32];
-        let transfer_action = Action::Transfer(TransferAction { deposit: 1u128 });
+        let transfer_action = Action::Transfer(TransferAction { deposit: U128(1) });
         let actions = vec![transfer_action];
 
         let near_tx = TransactionBuilder::new::<NEAR>()
@@ -56,7 +52,7 @@ mod tests {
             3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ];
 
-        assert!(encoded_data.len() > 0);
+        assert!(!encoded_data.is_empty());
         assert_eq!(encoded_data, expected_data);
     }
 }

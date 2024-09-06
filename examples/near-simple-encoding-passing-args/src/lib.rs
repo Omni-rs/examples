@@ -2,13 +2,8 @@ use near_sdk::near;
 use omni_transaction::near::near_transaction::NearTransaction;
 
 #[near(contract_state)]
+#[derive(Default)]
 pub struct Contract {}
-
-impl Default for Contract {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 #[near]
 impl Contract {
@@ -19,11 +14,12 @@ impl Contract {
 
 #[cfg(test)]
 mod tests {
+    use omni_transaction::near::types::{U128, U64};
     use omni_transaction::{
         near::{
             types::{
-                AccessKey, AccessKeyPermission, Action, AddKeyAction, BlockHash, ED25519PublicKey,
-                PublicKey, TransferAction,
+                AccessKey, AccessKeyPermission, Action, AddKeyAction, BlockHash, PublicKey,
+                TransferAction,
             },
             utils::PublicKeyStrExt,
         },
@@ -42,7 +38,7 @@ mod tests {
         let nonce = 0;
         let receiver_id = "bob.near";
         let block_hash = [0u8; 32];
-        let transfer_action = Action::Transfer(TransferAction { deposit: 1u128 });
+        let transfer_action = Action::Transfer(TransferAction { deposit: U128(1) });
         let actions = vec![transfer_action];
 
         let near_tx = TransactionBuilder::new::<NEAR>()
@@ -65,7 +61,7 @@ mod tests {
             3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ];
 
-        assert!(encoded_data.len() > 0);
+        assert!(!encoded_data.is_empty());
         assert_eq!(encoded_data, expected_data);
     }
 
@@ -81,11 +77,11 @@ mod tests {
             .to_block_hash()
             .unwrap();
 
-        let transfer_action = Action::Transfer(TransferAction { deposit: 1u128 });
+        let transfer_action = Action::Transfer(TransferAction { deposit: U128(1) });
         let add_key_action = Action::AddKey(Box::new(AddKeyAction {
             public_key: signer_public_key.to_public_key().unwrap(),
             access_key: AccessKey {
-                nonce: 0,
+                nonce: U64(0),
                 permission: AccessKeyPermission::FullAccess,
             },
         }));
@@ -116,7 +112,7 @@ mod tests {
             22, 166, 29, 193, 0, 0, 0, 0, 0, 0, 0, 0, 1,
         ];
 
-        assert!(encoded_data.len() > 0);
+        assert!(!encoded_data.is_empty());
         assert!(encoded_data == expected_data);
     }
 }

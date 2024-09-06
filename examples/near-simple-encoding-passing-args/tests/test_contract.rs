@@ -1,9 +1,6 @@
 use omni_transaction::{
     near::{
-        types::{
-            AccessKey, AccessKeyPermission, Action, AddKeyAction, ED25519PublicKey, PublicKey,
-            TransferAction,
-        },
+        types::{AccessKey, AccessKeyPermission, Action, AddKeyAction, TransferAction, U128, U64},
         utils::PublicKeyStrExt,
     },
     transaction_builder::{TransactionBuilder, TxBuilder},
@@ -28,11 +25,11 @@ async fn test_simple_encoding_with_args_for_near() -> Result<(), Box<dyn std::er
     let block_hash = "4reLvkAWfqk5fsqio1KLudk46cqRz9erQdaHkWZKMJDZ";
     let block_hash_as_bytes = block_hash.to_block_hash().unwrap();
 
-    let transfer_action = Action::Transfer(TransferAction { deposit: 1u128 });
+    let transfer_action = Action::Transfer(TransferAction { deposit: U128(1) });
     let add_key_action = Action::AddKey(Box::new(AddKeyAction {
         public_key: signer_public_key.clone(),
         access_key: AccessKey {
-            nonce: 0,
+            nonce: U64(0),
             permission: AccessKeyPermission::FullAccess,
         },
     }));
