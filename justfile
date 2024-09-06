@@ -17,3 +17,6 @@ check-wasm:
 # Run example
 run PROJECT:
     cargo test -p {{PROJECT}} -- --nocapture
+
+test-all:
+    cargo test --workspace -- --nocapture
