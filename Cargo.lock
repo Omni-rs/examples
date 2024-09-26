@@ -378,6 +378,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-simple-encoding"
+version = "0.0.1"
+dependencies = [
+ "near-sdk",
+ "near-workspaces",
+ "omni-transaction",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "bitcoin_hashes"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3571,7 +3582,7 @@ dependencies = [
 [[package]]
 name = "omni-transaction"
 version = "0.1.0"
-source = "git+https://github.com/edsonalcala/omni-transaction-rs.git?branch=development#c773a43285fd6fccdca6de1a52a7f98c209f9ba9"
+source = "git+https://github.com/edsonalcala/omni-transaction-rs.git?branch=adding-bitcoin-support#de7483e627cc54be628295e57939fdf74cc781e4"
 dependencies = [
  "borsh",
  "bs58 0.5.1",
@@ -3580,6 +3591,7 @@ dependencies = [
  "rlp",
  "serde",
  "serde-big-array",
+ "sha2 0.10.8",
 ]
 
 [[package]]
@@ -4321,9 +4333,9 @@ dependencies = [
 
 [[package]]
 name = "rlp"
-version = "0.5.2"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb919243f34364b6bd2fc10ef797edbfa75f33c252e7998527479c6d6b47e1ec"
+checksum = "fa24e92bb2a83198bb76d661a71df9f7076b8c420b8696e4d3d97d50d94479e3"
 dependencies = [
  "bytes",
  "rustc-hex",

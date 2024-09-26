@@ -56,3 +56,9 @@ The recommendation is to go thought each example and read the annotated integrat
 - [ ] [Simple encoding with signature](#)
 - [ ] [Simple signing](#)
 
+### Bitcoin
+
+- [x] [Simple encoding](./examples/bitcoin-simple-encoding)
+- [ ] [Simple encoding passing args](#)
+- [ ] [Simple encoding with signature](#)
+- [ ] [Simple signing](#)
