@@ -1,0 +1,44 @@
+[package]
+name = "bitcoin-signing-with-propagation"
+publish.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+near-sdk.workspace = true
+omni-transaction.workspace = true
+hex.workspace = true
+
+[dev-dependencies]
+serde = { version = "1.0.166", features = ["derive"] }
+near-sdk = { version = "5.5.0", features = ["unit-testing"] }
+near-crypto = "0.26.0"
+tempfile = "3.3.0"
+bitcoin = { version = "0.32.0", default-features = false, features = [
+    "std",
+    "serde",
+    "rand-std",
+    "rand",
+    "secp-lowmemory",
+    "secp-recovery",
+] }
+bitcoind = { package = "bitcoind-json-rpc-regtest", version = "0.3.0", features = [
+    "26_0",
+] }
+near-jsonrpc-client = "0.13.0"
+near-primitives = "0.26.0"
+near-jsonrpc-primitives = "0.26.0"
+near-workspaces.workspace = true
+tokio.workspace = true
+serde_json.workspace = true
