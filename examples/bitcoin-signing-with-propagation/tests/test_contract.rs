@@ -109,7 +109,7 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Prepare the BTCTestContext
-    let mut btc_test_context = BTCTestContext::new(&btc_client).unwrap();
+    let mut btc_test_context = BTCTestContext::new(btc_client).unwrap();
 
     // Setup Bob and Alice addresses
     let bob = btc_test_context.setup_account().unwrap();
@@ -188,7 +188,7 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
     // Parse result
     if let QueryResponseKind::CallResult(call_result) = response.kind {
         if let Ok(result_str) = String::from_utf8(call_result.result.clone()) {
-            let sighash_omni = sha256d::Hash::hash(&result_str.as_bytes().to_vec());
+            let sighash_omni = sha256d::Hash::hash(result_str.as_bytes());
             let msg_omni = Message::from_digest_slice(sighash_omni.as_byte_array()).unwrap();
 
             let args = json!({
@@ -214,7 +214,6 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
                     // Verify the content of `response`
 
                     // Assert
-                    assert!(true);
                 }
                 Err(e) => {
                     panic!("Error calling signer: {:?}", e);
@@ -259,7 +258,7 @@ async fn wait_for_transaction(
                 return Ok(response);
             }
             Err(err) => {
-                if let Some(RpcTransactionError::TimeoutError) = err.handler_error() {
+                if matches!(err.handler_error(), Some(RpcTransactionError::TimeoutError)) {
                     continue;
                 }
                 return Err(err.into());
@@ -280,7 +279,7 @@ async fn send_transaction(
     match client.call(request.clone()).await {
         Ok(response) => Ok(response),
         Err(err) => {
-            if let Some(RpcTransactionError::TimeoutError) = err.handler_error() {
+            if matches!(err.handler_error(), Some(RpcTransactionError::TimeoutError)) {
                 let tx_hash = request.signed_transaction.get_hash();
                 let sender_account_id = request.signed_transaction.transaction.signer_id().clone();
                 wait_for_transaction(client, tx_hash, sender_account_id, sent_at).await
