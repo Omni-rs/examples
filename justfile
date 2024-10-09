@@ -19,7 +19,7 @@ check-wasm:
 # Run example
 run PROJECT *FLAGS:
     if [[ " {{FLAGS}} " == *" --deploy "* ]]; then \
-        cargo test -p {{PROJECT}} -- --nocapture --deploy; \
+        DEPLOY=true cargo test -p {{PROJECT}} -- --nocapture; \
     else \
         cargo test -p {{PROJECT}} -- --nocapture; \
     fi

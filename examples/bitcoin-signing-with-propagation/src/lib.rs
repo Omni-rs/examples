@@ -5,11 +5,11 @@ use near_sdk::{near, Gas, NearToken};
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::EcdsaSighashType;
 
-const MPC_CONTRACT_ACCOUNT_ID: &str = "v1.signer-dev.testnet";
-const ONE_YOCTO: NearToken = NearToken::from_yoctonear(1);
+const MPC_CONTRACT_ACCOUNT_ID: &str = "v1.signer-prod.testnet";
+const ONE_YOCTO: NearToken = NearToken::from_yoctonear(100000000000000000000000);
 const GAS: Gas = Gas::from_tgas(250);
-const PATH: &str = "m/44'/0'/0'/0/0";
-const KEY_VERSION: u32 = 1;
+const PATH: &str = "bitcoin-1";
+const KEY_VERSION: u32 = 0;
 
 #[derive(Debug, Serialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -54,22 +54,6 @@ impl Contract {
             .with_static_gas(GAS)
             .with_attached_deposit(ONE_YOCTO)
             .sign(request)
-            .then(Self::ext(env::current_account_id()).callback_handle_sign_result())
-    }
-
-    #[private]
-    pub fn callback_handle_sign_result(
-        &self,
-        #[callback_result] result: Result<(), near_sdk::PromiseError>,
-    ) {
-        match result {
-            Ok(_) => {
-                println!("Sign operation completed successfully.");
-            }
-            Err(_) => {
-                println!("Sign operation failed.");
-            }
-        }
     }
 }
 

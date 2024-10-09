@@ -1,12 +1,15 @@
 // Rust Bitcoin Dependencies
 use bitcoin::hashes::{sha256d, Hash};
-use bitcoin::secp256k1::Message;
+use bitcoin::script::Builder;
+use bitcoin::secp256k1::ecdsa::Signature;
+use bitcoin::secp256k1::{self, Message};
+use bitcoin::EcdsaSighashType;
 // NEAR Dependencies
 use near_crypto::{InMemorySigner, PublicKey, SecretKey};
 use near_jsonrpc_client::methods::tx::{RpcTransactionError, TransactionInfo};
 use near_jsonrpc_client::{methods, JsonRpcClient};
 use near_jsonrpc_primitives::types::query::QueryResponseKind;
-use near_primitives::action::{Action, DeployContractAction};
+use near_primitives::action::{Action, DeployContractAction, FunctionCallAction};
 use near_primitives::hash::CryptoHash;
 use near_primitives::transaction::{Transaction, TransactionV0};
 use near_primitives::types::{BlockReference, Finality, FunctionArgs};
@@ -15,14 +18,14 @@ use near_sdk::AccountId;
 // Omni Transaction Dependencies
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
-    Amount, Hash as OmniHash, LockTime, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid, Version,
-    Witness,
+    Amount, Hash as OmniHash, LockTime, OutPoint, ScriptBuf, Sequence, TransactionType, TxIn,
+    TxOut, Txid, Version, Witness,
 };
 use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
 use omni_transaction::types::BITCOIN;
 // Other Dependencies
 use serde::Deserialize;
-use serde_json::json;
+use serde_json::{json, Value};
 use std::fs::File;
 use std::io::Read;
 use std::time::{Duration, Instant};
@@ -44,7 +47,7 @@ const OMNI_SPEND_AMOUNT: Amount = Amount::from_sat(500_000_000);
 
 #[tokio::test]
 async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
-    let should_deploy = std::env::args().any(|arg| arg == "--deploy");
+    let should_deploy = std::env::var("DEPLOY").is_ok();
 
     // Start Bitcoin node
     let bitcoind = setup_bitcoin_testnet().unwrap();
@@ -59,10 +62,6 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
     let private_key: SecretKey = config.private_key.parse().unwrap();
     let public_key: PublicKey = config.public_key.parse().unwrap();
 
-    println!("account_id: {:?}", account_id);
-    println!("private_key: {:?}", private_key);
-    println!("public_key: {:?}", public_key);
-
     // Create signer
     let signer: InMemorySigner =
         InMemorySigner::from_secret_key(account_id.clone(), private_key.clone());
@@ -74,8 +73,12 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
     let near_json_rpc_client = JsonRpcClient::connect(NEAR_RPC_TESTNET);
 
     // Get the block hash and nonce
-    let result =
-        get_nonce_and_block_hash(&near_json_rpc_client, account_id.clone(), public_key).await;
+    let result = get_nonce_and_block_hash(
+        &near_json_rpc_client,
+        account_id.clone(),
+        public_key.clone(),
+    )
+    .await;
 
     let (nonce, block_hash) = result.unwrap();
 
@@ -96,7 +99,7 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
             actions: vec![deploy_action],
         });
 
-        let signer = &signer.into();
+        let signer = &signer.clone().into();
 
         // Sign and send the transaction
         let request = methods::send_tx::RpcSendTransactionRequest {
@@ -104,14 +107,15 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
             wait_until: TxExecutionStatus::Final,
         };
 
-        let response = send_transaction(&near_json_rpc_client, request).await?;
-        println!("Contract deployed: {:?}", response);
+        let _ = send_transaction(&near_json_rpc_client, request).await?;
+
+        println!("Contract deployed");
     }
 
     // Prepare the BTCTestContext
     let mut btc_test_context = BTCTestContext::new(btc_client).unwrap();
 
-    // Setup Bob and Alice addresses
+    // Setup Bob
     let bob = btc_test_context.setup_account().unwrap();
 
     let alice = btc_test_context.setup_account().unwrap();
@@ -196,29 +200,89 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
             });
 
             // Call the MPC Signer
-            let signer_request = methods::query::RpcQueryRequest {
-                block_reference: BlockReference::Finality(Finality::Final),
-                request: QueryRequest::CallFunction {
-                    account_id: account_id.clone(),
-                    method_name: "sign_sighash_p2pkh".to_string(),
-                    args: FunctionArgs::from(args.to_string().into_bytes()),
-                },
+
+            // 1.- Create the action
+            let signing_action = Action::FunctionCall(Box::new(FunctionCallAction {
+                method_name: "sign_sighash_p2pkh".to_string(),
+                args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
+                gas: 300_000_000_000_000,
+                deposit: 100000000000000000000000,
+            }));
+
+            let result =
+                get_nonce_and_block_hash(&near_json_rpc_client, account_id.clone(), public_key)
+                    .await;
+
+            let (nonce, block_hash) = result.unwrap();
+
+            let nonce = nonce + 1;
+
+            // 2.- Create the transaction
+            let near_tx: Transaction = Transaction::V0(TransactionV0 {
+                signer_id: account_id.clone(),
+                public_key: signer.public_key(),
+                nonce,
+                receiver_id: account_id.clone(),
+                block_hash,
+                actions: vec![signing_action],
+            });
+
+            // 3.- Sign the transaction
+            let signer = &signer.into();
+            let signed_transaction = near_tx.sign(signer);
+
+            // 4.- Send the transaction
+            let request = methods::send_tx::RpcSendTransactionRequest {
+                signed_transaction,
+                wait_until: TxExecutionStatus::Final,
             };
 
-            let signer_response = near_json_rpc_client.call(signer_request).await;
+            let signer_response = send_transaction(&near_json_rpc_client, request).await?;
+            println!("Transaction sent: {:?}", signer_response);
 
-            match signer_response {
-                Ok(response) => {
-                    println!("signer_response: {:?}", response);
+            let response_str = serde_json::to_string(&signer_response)?;
 
-                    // Verify the content of `response`
+            let (big_r, s) = extract_big_r_and_s(&response_str).unwrap();
+            println!("big_r: {:?}", big_r);
+            println!("s: {:?}", s);
 
-                    // Assert
-                }
-                Err(e) => {
-                    panic!("Error calling signer: {:?}", e);
-                }
-            }
+            let signature_built = create_signature(&big_r, &s);
+            println!("signature_built: {:?}", signature_built);
+
+            // Encode the signature
+            let signature = bitcoin::ecdsa::Signature {
+                signature: signature_built.unwrap(),
+                sighash_type: EcdsaSighashType::All,
+            };
+
+            println!("signature: {:?}", signature);
+
+            // Create the script_sig
+            let script_sig_new = Builder::new()
+                .push_slice(signature.serialize())
+                .push_key(&bob.bitcoin_public_key)
+                .into_script();
+
+            // Assign script_sig to txin
+            let omni_script_sig = ScriptBuf(script_sig_new.as_bytes().to_vec());
+            let encoded_omni_tx =
+                btc_tx.build_with_script_sig(0, omni_script_sig, TransactionType::P2PKH);
+
+            // for each UTXO I need to sign and attach again....
+
+            // Convert the transaction to a hexadecimal string
+            let hex_omni_tx = hex::encode(encoded_omni_tx);
+
+            // We now deploy to the bitcoin network (regtest mode)
+            let raw_tx_result: serde_json::Value = btc_client
+                .call("sendrawtransaction", &[json!(hex_omni_tx)])
+                .unwrap();
+
+            println!("raw_tx_result: {:?}", raw_tx_result);
+
+            btc_client.generate_to_address(1, &bob.address)?;
+
+            // assert_utxos_for_address(client, alice.address, 1);
         } else {
             println!("Result contains non-UTF8 bytes");
         }
@@ -267,6 +331,57 @@ async fn wait_for_transaction(
     }
 }
 
+fn extract_big_r_and_s(signer_response: &str) -> Result<(String, String), String> {
+    // Parse the JSON response
+    let v: Value = serde_json::from_str(signer_response).map_err(|e| e.to_string())?;
+
+    // Navigate through the JSON structure to extract big_r and s
+    if let Some(success_value) = v["final_execution_outcome"]["status"]["SuccessValue"].as_str() {
+        if let Ok(inner) = serde_json::from_str::<Value>(success_value) {
+            if let Some(big_r) = inner["big_r"]["affine_point"].as_str() {
+                if let Some(s) = inner["s"]["scalar"].as_str() {
+                    return Ok((big_r.to_string(), s.to_string()));
+                }
+            }
+        }
+    }
+
+    Err("Failed to extract big_r and s".to_string())
+}
+
+fn create_signature(big_r_hex: &str, s_hex: &str) -> Result<Signature, secp256k1::Error> {
+    // Convert hex strings to byte arrays
+    let big_r_bytes = hex::decode(big_r_hex).unwrap();
+    let s_bytes = hex::decode(s_hex).unwrap();
+
+    // Remove the first byte from big_r (compressed point indicator)
+    let big_r_x_bytes = &big_r_bytes[1..];
+
+    // Ensure the byte arrays are the correct length
+    if big_r_x_bytes.len() != 32 || s_bytes.len() != 32 {
+        return Err(secp256k1::Error::InvalidSignature);
+    }
+
+    // Create the signature from the bytes
+    let mut signature_bytes = [0u8; 64];
+    signature_bytes[..32].copy_from_slice(big_r_x_bytes);
+    signature_bytes[32..].copy_from_slice(&s_bytes);
+
+    // Create the signature object
+    let signature = Signature::from_compact(&signature_bytes)?;
+
+    Ok(signature)
+}
+
+fn main() {
+    let big_r = "03ACA6D62D6D74076ED555CC1F76C3B87E49255FB9036806F255A6B3A85E875A12";
+    let s = "266777C51..."; // Complete the scalar value
+
+    match create_signature(big_r, s) {
+        Ok(signature) => println!("Signature created successfully: {:?}", signature),
+        Err(e) => println!("Error creating signature: {:?}", e),
+    }
+}
 async fn send_transaction(
     client: &JsonRpcClient,
     request: methods::send_tx::RpcSendTransactionRequest,
