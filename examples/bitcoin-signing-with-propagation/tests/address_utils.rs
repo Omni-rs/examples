@@ -67,6 +67,24 @@ pub fn derive_secret_key(secret_key: &SecretKey, epsilon: Scalar) -> SecretKey {
     SecretKey::new((epsilon + secret_key.to_nonzero_scalar().as_ref()).into())
 }
 
+const ROOT_PUBLIC_KEY: &str = "secp256k1:4NfTiv3UsGahebgTaHyD9vF8KYKMBnfd6kh94mK6xv8fGBiJB8TBtFMP5WWXz6B89Ac1fbpzPwAvoyQebemHFwx3";
+const PATH: &str = "bitcoin-1";
+pub struct DerivedAddress {
+    pub address: String,
+    pub public_key: PublicKey,
+}
+
+pub fn get_derived_address(predecessor_id: &AccountId) -> DerivedAddress {
+    let epsilon = derive_epsilon(predecessor_id, PATH);
+    let public_key = convert_string_to_public_key(ROOT_PUBLIC_KEY).unwrap();
+    let derived_public_key = derive_key(public_key, epsilon);
+    let address = public_key_to_btc_address(derived_public_key, "testnet");
+    DerivedAddress {
+        address,
+        public_key: derived_public_key,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

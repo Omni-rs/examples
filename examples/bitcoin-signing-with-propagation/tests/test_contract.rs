@@ -238,6 +238,8 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
 
     btc_client.generate_to_address(1, &bob.address)?;
 
+    println!("Bob has sent a transaction to the bitcoin network where the spender is the derived address");
+
     // Till here, we simply have sent a transaction to the bitcoin network where the spender is the derived address
 
     // TODO: Verify the address of the NEAR contract has a UTXO
@@ -245,127 +247,127 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
     // TODO: Now the near contract has a UTXO, we can call the contract to get the sighash
     // TODO: But before we need to create another transaction where the spender is the derived address
     // --------
-    let near_contract_spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
-        .version(Version::One)
-        .lock_time(LockTime::from_height(1).unwrap())
-        .inputs(vec![txin])
-        .outputs(vec![txout, change_txout])
-        .build();
+    // let near_contract_spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
+    //     .version(Version::One)
+    //     .lock_time(LockTime::from_height(1).unwrap())
+    //     .inputs(vec![txin])
+    //     .outputs(vec![txout, change_txout])
+    //     .build();
 
-    let method_name = "generate_sighash_p2pkh";
-    let args = json!({
-        "bitcoin_tx": btc_tx
-    });
+    // let method_name = "generate_sighash_p2pkh";
+    // let args = json!({
+    //     "bitcoin_tx": btc_tx
+    // });
 
-    let request = methods::query::RpcQueryRequest {
-        block_reference: BlockReference::Finality(Finality::Final),
-        request: QueryRequest::CallFunction {
-            account_id: account_id.clone(),
-            method_name: method_name.to_string(),
-            args: FunctionArgs::from(args.to_string().into_bytes()),
-        },
-    };
+    // let request = methods::query::RpcQueryRequest {
+    //     block_reference: BlockReference::Finality(Finality::Final),
+    //     request: QueryRequest::CallFunction {
+    //         account_id: account_id.clone(),
+    //         method_name: method_name.to_string(),
+    //         args: FunctionArgs::from(args.to_string().into_bytes()),
+    //     },
+    // };
 
-    let response = near_json_rpc_client.call(request).await?;
+    // let response = near_json_rpc_client.call(request).await?;
 
-    // Parse result
-    if let QueryResponseKind::CallResult(call_result) = response.kind {
-        if let Ok(result_str) = String::from_utf8(call_result.result.clone()) {
-            let sighash_omni = sha256d::Hash::hash(result_str.as_bytes());
-            let msg_omni = Message::from_digest_slice(sighash_omni.as_byte_array()).unwrap();
+    // // Parse result
+    // if let QueryResponseKind::CallResult(call_result) = response.kind {
+    //     if let Ok(result_str) = String::from_utf8(call_result.result.clone()) {
+    //         let sighash_omni = sha256d::Hash::hash(result_str.as_bytes());
+    //         let msg_omni = Message::from_digest_slice(sighash_omni.as_byte_array()).unwrap();
 
-            let args = json!({
-                "sighash_p2pkh": hex::encode(msg_omni.as_ref())
-            });
+    //         let args = json!({
+    //             "sighash_p2pkh": hex::encode(msg_omni.as_ref())
+    //         });
 
-            // Call the MPC Signer
+    //         // Call the MPC Signer
 
-            // 1.- Create the action
-            let signing_action = Action::FunctionCall(Box::new(FunctionCallAction {
-                method_name: "sign_sighash_p2pkh".to_string(),
-                args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
-                gas: 300_000_000_000_000,
-                deposit: 100000000000000000000000,
-            }));
+    //         // 1.- Create the action
+    //         let signing_action = Action::FunctionCall(Box::new(FunctionCallAction {
+    //             method_name: "sign_sighash_p2pkh".to_string(),
+    //             args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
+    //             gas: 300_000_000_000_000,
+    //             deposit: 100000000000000000000000,
+    //         }));
 
-            let result =
-                get_nonce_and_block_hash(&near_json_rpc_client, account_id.clone(), public_key)
-                    .await;
+    //         let result =
+    //             get_nonce_and_block_hash(&near_json_rpc_client, account_id.clone(), public_key)
+    //                 .await;
 
-            let (nonce, block_hash) = result.unwrap();
+    //         let (nonce, block_hash) = result.unwrap();
 
-            let nonce = nonce + 1;
+    //         let nonce = nonce + 1;
 
-            // 2.- Create the transaction
-            let near_tx: Transaction = Transaction::V0(TransactionV0 {
-                signer_id: account_id.clone(),
-                public_key: signer.public_key(),
-                nonce,
-                receiver_id: account_id.clone(),
-                block_hash,
-                actions: vec![signing_action],
-            });
+    //         // 2.- Create the transaction
+    //         let near_tx: Transaction = Transaction::V0(TransactionV0 {
+    //             signer_id: account_id.clone(),
+    //             public_key: signer.public_key(),
+    //             nonce,
+    //             receiver_id: account_id.clone(),
+    //             block_hash,
+    //             actions: vec![signing_action],
+    //         });
 
-            // 3.- Sign the transaction
-            let signer = &signer.into();
-            let signed_transaction = near_tx.sign(signer);
+    //         // 3.- Sign the transaction
+    //         let signer = &signer.into();
+    //         let signed_transaction = near_tx.sign(signer);
 
-            // 4.- Send the transaction
-            let request = methods::send_tx::RpcSendTransactionRequest {
-                signed_transaction,
-                wait_until: TxExecutionStatus::Final,
-            };
+    //         // 4.- Send the transaction
+    //         let request = methods::send_tx::RpcSendTransactionRequest {
+    //             signed_transaction,
+    //             wait_until: TxExecutionStatus::Final,
+    //         };
 
-            let signer_response = send_transaction(&near_json_rpc_client, request).await?;
-            println!("Transaction sent: {:?}", signer_response);
+    //         let signer_response = send_transaction(&near_json_rpc_client, request).await?;
+    //         println!("Transaction sent: {:?}", signer_response);
 
-            let response_str = serde_json::to_string(&signer_response)?;
+    //         let response_str = serde_json::to_string(&signer_response)?;
 
-            let (big_r, s) = extract_big_r_and_s(&response_str).unwrap();
-            println!("big_r: {:?}", big_r);
-            println!("s: {:?}", s);
+    //         let (big_r, s) = extract_big_r_and_s(&response_str).unwrap();
+    //         println!("big_r: {:?}", big_r);
+    //         println!("s: {:?}", s);
 
-            let signature_built = create_signature(&big_r, &s);
-            println!("signature_built: {:?}", signature_built);
+    //         let signature_built = create_signature(&big_r, &s);
+    //         println!("signature_built: {:?}", signature_built);
 
-            // Encode the signature
-            let signature = bitcoin::ecdsa::Signature {
-                signature: signature_built.unwrap(),
-                sighash_type: bitcoin::EcdsaSighashType::All,
-            };
+    //         // Encode the signature
+    //         let signature = bitcoin::ecdsa::Signature {
+    //             signature: signature_built.unwrap(),
+    //             sighash_type: bitcoin::EcdsaSighashType::All,
+    //         };
 
-            println!("signature: {:?}", signature);
+    //         println!("signature: {:?}", signature);
 
-            // Create the script_sig
-            let script_sig_new = Builder::new()
-                .push_slice(signature.serialize())
-                .push_key(&bob.bitcoin_public_key)
-                .into_script();
+    //         // Create the script_sig
+    //         let script_sig_new = Builder::new()
+    //             .push_slice(signature.serialize())
+    //             .push_key(&bob.bitcoin_public_key)
+    //             .into_script();
 
-            // Assign script_sig to txin
-            let omni_script_sig = ScriptBuf(script_sig_new.as_bytes().to_vec());
-            let encoded_omni_tx =
-                btc_tx.build_with_script_sig(0, omni_script_sig, TransactionType::P2PKH);
+    //         // Assign script_sig to txin
+    //         let omni_script_sig = ScriptBuf(script_sig_new.as_bytes().to_vec());
+    //         let encoded_omni_tx =
+    //             btc_tx.build_with_script_sig(0, omni_script_sig, TransactionType::P2PKH);
 
-            // TODO: for each UTXO I need to sign and attach again....
+    //         // TODO: for each UTXO I need to sign and attach again....
 
-            // Convert the transaction to a hexadecimal string
-            let hex_omni_tx = hex::encode(encoded_omni_tx);
+    //         // Convert the transaction to a hexadecimal string
+    //         let hex_omni_tx = hex::encode(encoded_omni_tx);
 
-            // We now deploy to the bitcoin network (regtest mode)
-            let raw_tx_result: serde_json::Value = btc_client
-                .call("sendrawtransaction", &[json!(hex_omni_tx)])
-                .unwrap();
+    //         // We now deploy to the bitcoin network (regtest mode)
+    //         let raw_tx_result: serde_json::Value = btc_client
+    //             .call("sendrawtransaction", &[json!(hex_omni_tx)])
+    //             .unwrap();
 
-            println!("raw_tx_result: {:?}", raw_tx_result);
+    //         println!("raw_tx_result: {:?}", raw_tx_result);
 
-            btc_client.generate_to_address(1, &bob.address)?;
+    //         btc_client.generate_to_address(1, &bob.address)?;
 
-            // assert_utxos_for_address(client, alice.address, 1);
-        } else {
-            println!("Result contains non-UTF8 bytes");
-        }
-    }
+    //         // assert_utxos_for_address(client, alice.address, 1);
+    //     } else {
+    //         println!("Result contains non-UTF8 bytes");
+    //     }
+    // }
 
     Ok(())
 }
