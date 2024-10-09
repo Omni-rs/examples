@@ -1,9 +1,12 @@
 // Rust Bitcoin Dependencies
-use bitcoin::hashes::{sha256d, Hash};
+use bitcoin::hashes::{ripemd160, sha256d, Hash};
+use bitcoin::key::Secp256k1;
+use bitcoin::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
 use bitcoin::script::Builder;
 use bitcoin::secp256k1::ecdsa::Signature;
 use bitcoin::secp256k1::{self, Message};
-use bitcoin::EcdsaSighashType;
+use k256::elliptic_curve::sec1::ToEncodedPoint;
+
 // NEAR Dependencies
 use near_crypto::{InMemorySigner, PublicKey, SecretKey};
 use near_jsonrpc_client::methods::tx::{RpcTransactionError, TransactionInfo};
@@ -18,8 +21,8 @@ use near_sdk::AccountId;
 // Omni Transaction Dependencies
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
-    Amount, Hash as OmniHash, LockTime, OutPoint, ScriptBuf, Sequence, TransactionType, TxIn,
-    TxOut, Txid, Version, Witness,
+    Amount, EcdsaSighashType, Hash as OmniHash, LockTime, OutPoint, ScriptBuf, Sequence,
+    TransactionType, TxIn, TxOut, Txid, Version, Witness,
 };
 use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
 use omni_transaction::types::BITCOIN;
@@ -31,10 +34,11 @@ use std::io::Read;
 use std::time::{Duration, Instant};
 use tempfile::TempDir;
 
+mod address_utils;
 mod bitcoin_utils;
 
+use address_utils::get_derived_address;
 use bitcoin_utils::BTCTestContext;
-
 #[derive(Debug, Deserialize)]
 struct Config {
     account_id: String,
@@ -117,16 +121,13 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
 
     // Setup Bob
     let bob = btc_test_context.setup_account().unwrap();
-
-    let alice = btc_test_context.setup_account().unwrap();
+    println!("bob.script_pubkey: {:?}", bob.script_pubkey);
 
     // Generate 101 blocks to the address
     btc_client.generate_to_address(101, &bob.address)?;
 
     // List UTXOs for Bob
     let unspent_utxos_bob = btc_test_context.get_utxo_for_address(&bob.address).unwrap();
-
-    // println!("unspent_utxos_bob: {:?}", unspent_utxos_bob);
 
     // Get the first UTXO
     let first_unspent = unspent_utxos_bob
@@ -147,9 +148,29 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
         witness: Witness::default(),
     };
 
+    // Get the derived address
+    let derived_address = get_derived_address(&account_id);
+    let derived_public_key_bytes = derived_address.public_key.to_encoded_point(false); // Ensure this method exists
+    let derived_public_key_bytes_array = derived_public_key_bytes.as_bytes();
+
+    println!("btc derived_address: {:?}", derived_address.address);
+
+    // Hash the public key using SHA-256 followed by RIPEMD-160
+    let sha256_hash = sha256d::Hash::hash(&derived_public_key_bytes_array);
+    let ripemd160_hash = ripemd160::Hash::hash(sha256_hash.as_byte_array());
+
+    // The script_pubkey for the NEAR contract to be the spender
+    let script_pubkey = Builder::new()
+        .push_opcode(OP_DUP)
+        .push_opcode(OP_HASH160)
+        .push_slice(&ripemd160_hash.as_byte_array())
+        .push_opcode(OP_EQUALVERIFY)
+        .push_opcode(OP_CHECKSIG)
+        .into_script();
+
     let txout = TxOut {
         value: OMNI_SPEND_AMOUNT,
-        script_pubkey: ScriptBuf(alice.script_pubkey.as_bytes().to_vec()),
+        script_pubkey: ScriptBuf(script_pubkey.as_bytes().to_vec()), // Here we use the script_pubkey of the derived address as the spender
     };
 
     let utxo_amount =
@@ -172,7 +193,65 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
     // Add the script_sig to the transaction
     btc_tx.input[0].script_sig = ScriptBuf(bob.script_pubkey.as_bytes().to_vec());
 
-    // Call the contract to get the sighash
+    // Encode the transaction for signing
+    let encoded_data = btc_tx.build_for_signing_legacy(EcdsaSighashType::All);
+
+    // Calculate the sighash
+    let sighash_omni = sha256d::Hash::hash(&encoded_data);
+    let msg_omni = Message::from_digest_slice(sighash_omni.as_byte_array()).unwrap();
+
+    // Sign the sighash and broadcast the transaction using the Omni library
+    let secp = Secp256k1::new();
+    let signature_omni = secp.sign_ecdsa(&msg_omni, &bob.private_key);
+
+    // Verify signature
+    let is_valid = secp
+        .verify_ecdsa(&msg_omni, &signature_omni, &bob.public_key)
+        .is_ok();
+
+    assert!(is_valid, "The signature should be valid");
+
+    // Encode the signature
+    let signature = bitcoin::ecdsa::Signature {
+        signature: signature_omni,
+        sighash_type: bitcoin::EcdsaSighashType::All,
+    };
+
+    // Create the script_sig
+    let script_sig_new = Builder::new()
+        .push_slice(signature.serialize())
+        .push_key(&bob.bitcoin_public_key)
+        .into_script();
+
+    // Assign script_sig to txin
+    let omni_script_sig = ScriptBuf(script_sig_new.as_bytes().to_vec());
+    let encoded_omni_tx = btc_tx.build_with_script_sig(0, omni_script_sig, TransactionType::P2PKH);
+
+    // Convert the transaction to a hexadecimal string
+    let hex_omni_tx = hex::encode(encoded_omni_tx);
+
+    let raw_tx_result: serde_json::Value = btc_client
+        .call("sendrawtransaction", &[json!(hex_omni_tx)])
+        .unwrap();
+
+    println!("raw_tx_result: {:?}", raw_tx_result);
+
+    btc_client.generate_to_address(1, &bob.address)?;
+
+    // Till here, we simply have sent a transaction to the bitcoin network where the spender is the derived address
+
+    // TODO: Verify the address of the NEAR contract has a UTXO
+
+    // TODO: Now the near contract has a UTXO, we can call the contract to get the sighash
+    // TODO: But before we need to create another transaction where the spender is the derived address
+    // --------
+    let near_contract_spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
+        .version(Version::One)
+        .lock_time(LockTime::from_height(1).unwrap())
+        .inputs(vec![txin])
+        .outputs(vec![txout, change_txout])
+        .build();
+
     let method_name = "generate_sighash_p2pkh";
     let args = json!({
         "bitcoin_tx": btc_tx
@@ -252,7 +331,7 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
             // Encode the signature
             let signature = bitcoin::ecdsa::Signature {
                 signature: signature_built.unwrap(),
-                sighash_type: EcdsaSighashType::All,
+                sighash_type: bitcoin::EcdsaSighashType::All,
             };
 
             println!("signature: {:?}", signature);
@@ -268,7 +347,7 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
             let encoded_omni_tx =
                 btc_tx.build_with_script_sig(0, omni_script_sig, TransactionType::P2PKH);
 
-            // for each UTXO I need to sign and attach again....
+            // TODO: for each UTXO I need to sign and attach again....
 
             // Convert the transaction to a hexadecimal string
             let hex_omni_tx = hex::encode(encoded_omni_tx);
