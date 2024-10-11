@@ -5,14 +5,13 @@ use bitcoin::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
 use bitcoin::script::Builder;
 use bitcoin::secp256k1::ecdsa::Signature;
 use bitcoin::secp256k1::{self, Message};
+use bitcoin::Network;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
-
 // NEAR Dependencies
 use near_crypto::{InMemorySigner, PublicKey, SecretKey};
 use near_jsonrpc_client::methods::tx::{RpcTransactionError, TransactionInfo};
 use near_jsonrpc_client::{methods, JsonRpcClient};
 use near_jsonrpc_primitives::types::query::QueryResponseKind;
-use near_primitives::action::{Action, DeployContractAction, FunctionCallAction};
 use near_primitives::hash::CryptoHash;
 use near_primitives::transaction::{Transaction, TransactionV0};
 use near_primitives::types::{BlockReference, Finality, FunctionArgs};
@@ -27,93 +26,43 @@ use omni_transaction::bitcoin::types::{
 use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
 use omni_transaction::types::BITCOIN;
 // Other Dependencies
-use serde::Deserialize;
 use serde_json::{json, Value};
 use std::fs::File;
 use std::io::Read;
+use std::str::FromStr;
 use std::time::{Duration, Instant};
-use tempfile::TempDir;
 
-mod address_utils;
-mod bitcoin_utils;
+mod utils;
 
-use address_utils::get_derived_address;
-use bitcoin_utils::BTCTestContext;
-#[derive(Debug, Deserialize)]
-struct Config {
-    account_id: String,
-    private_key: String,
-    public_key: String,
-}
+use utils::{
+    address::get_derived_address,
+    bitcoin::{get_bitcoin_instance, BTCTestContext},
+    environment::get_user_account_info_from_file,
+    near::compile_and_deploy_contract,
+};
 
-const NEAR_RPC_TESTNET: &str = "https://rpc.testnet.near.org";
 const OMNI_SPEND_AMOUNT: Amount = Amount::from_sat(500_000_000);
 
 #[tokio::test]
-async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_sighash_p2pkh_btc_signing_with_propagation() -> Result<(), Box<dyn std::error::Error>>
+{
     let should_deploy = std::env::var("DEPLOY").is_ok();
 
     // Start Bitcoin node
-    let bitcoind = setup_bitcoin_testnet().unwrap();
+    let bitcoind = get_bitcoin_instance().unwrap();
     let btc_client = &bitcoind.client;
-    let blockchain_info = btc_client.get_blockchain_info().unwrap();
-    assert_eq!(0, blockchain_info.blocks);
 
     // Read the config
-    let config = read_config("config.json")?;
+    let user_account = get_user_account_info_from_file(None).unwrap();
 
-    let account_id: AccountId = config.account_id.parse().unwrap();
-    let private_key: SecretKey = config.private_key.parse().unwrap();
-    let public_key: PublicKey = config.public_key.parse().unwrap();
-
-    // Create signer
-    let signer: InMemorySigner =
-        InMemorySigner::from_secret_key(account_id.clone(), private_key.clone());
-
-    // Compile the contract
-    let contract_wasm = near_workspaces::compile_project("./").await?;
-
-    // Deploy the contract to near testnet
-    let near_json_rpc_client = JsonRpcClient::connect(NEAR_RPC_TESTNET);
-
-    // Get the block hash and nonce
-    let result = get_nonce_and_block_hash(
-        &near_json_rpc_client,
-        account_id.clone(),
-        public_key.clone(),
-    )
-    .await;
-
-    let (nonce, block_hash) = result.unwrap();
-
-    let nonce = nonce + 1;
+    // Create near signer
+    let signer: InMemorySigner = InMemorySigner::from_secret_key(
+        user_account.account_id.clone(),
+        user_account.private_key.clone(),
+    );
 
     if should_deploy {
-        // Create the deploy transaction
-        let deploy_action = Action::DeployContract(DeployContractAction {
-            code: contract_wasm,
-        });
-
-        let near_tx: Transaction = Transaction::V0(TransactionV0 {
-            signer_id: account_id.clone(),
-            public_key: signer.public_key(),
-            nonce,
-            receiver_id: account_id.clone(),
-            block_hash,
-            actions: vec![deploy_action],
-        });
-
-        let signer = &signer.clone().into();
-
-        // Sign and send the transaction
-        let request = methods::send_tx::RpcSendTransactionRequest {
-            signed_transaction: near_tx.sign(signer),
-            wait_until: TxExecutionStatus::Final,
-        };
-
-        let _ = send_transaction(&near_json_rpc_client, request).await?;
-
-        println!("Contract deployed");
+        compile_and_deploy_contract(&signer).await?;
     }
 
     // Prepare the BTCTestContext
@@ -211,6 +160,8 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
 
     assert!(is_valid, "The signature should be valid");
 
+    println!("is valid");
+
     // Encode the signature
     let signature = bitcoin::ecdsa::Signature {
         signature: signature_omni,
@@ -227,32 +178,87 @@ async fn test_sighash_p2pkh() -> Result<(), Box<dyn std::error::Error>> {
     let omni_script_sig = ScriptBuf(script_sig_new.as_bytes().to_vec());
     let encoded_omni_tx = btc_tx.build_with_script_sig(0, omni_script_sig, TransactionType::P2PKH);
 
+    let near_contract_address = bitcoin::Address::from_str(&derived_address.address.to_string())?;
+    let near_contract_address = near_contract_address
+        .require_network(Network::Regtest)
+        .unwrap();
+
     // Convert the transaction to a hexadecimal string
     let hex_omni_tx = hex::encode(encoded_omni_tx);
 
+    // We simply have sent a transaction to the bitcoin network where the spender is the derived address
     let raw_tx_result: serde_json::Value = btc_client
         .call("sendrawtransaction", &[json!(hex_omni_tx)])
         .unwrap();
 
     println!("raw_tx_result: {:?}", raw_tx_result);
 
-    btc_client.generate_to_address(1, &bob.address)?;
+    btc_client.generate_to_address(101, &bob.address)?;
 
     println!("Bob has sent a transaction to the bitcoin network where the spender is the derived address");
 
-    // Till here, we simply have sent a transaction to the bitcoin network where the spender is the derived address
+    btc_client.generate_to_address(101, &near_contract_address)?;
+    btc_client.generate_to_address(101, &near_contract_address)?;
 
-    // TODO: Verify the address of the NEAR contract has a UTXO
+    println!("near_contract_address: {:?}", near_contract_address);
 
-    // TODO: Now the near contract has a UTXO, we can call the contract to get the sighash
-    // TODO: But before we need to create another transaction where the spender is the derived address
-    // --------
-    // let near_contract_spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
-    //     .version(Version::One)
-    //     .lock_time(LockTime::from_height(1).unwrap())
-    //     .inputs(vec![txin])
-    //     .outputs(vec![txout, change_txout])
-    //     .build();
+    // Now we need to get the UTXO of the NEAR contract, we use scantxoutset to get the UTXO
+    let scan_txout_set_result: serde_json::Value = btc_client
+        .call(
+            "scantxoutset",
+            &[
+                json!("start"),
+                json!([{ "desc": format!("addr({})", near_contract_address) }]),
+            ],
+        )
+        .unwrap();
+
+    println!("scan_txout_set_result: {:?}", scan_txout_set_result);
+
+    // Now the near contract has a UTXO, we can call the NEAR contract to get the sighash and sign it
+    // But before we need to create another transaction where the spender is the derived address
+
+    // TODO: Get the TXID of the transaction where the spender is the derived address
+    // Place that value in the previous_output field
+    // The script_sig is the script_pubkey of the derived address
+    // The sequence is MAX
+    // The witness is empty
+
+    // Build the transaction where the sender is the derived address
+    let near_contract_spending_txid_str = first_unspent["txid"].as_str().unwrap();
+    let near_contract_spending_hash = OmniHash::from_hex(near_contract_spending_txid_str).unwrap();
+    let near_contract_spending_txid = Txid(near_contract_spending_hash);
+    let near_contract_spending_vout = first_unspent["vout"].as_u64().unwrap() as usize;
+
+    let near_contract_spending_txin: TxIn = TxIn {
+        previous_output: OutPoint::new(
+            near_contract_spending_txid,
+            near_contract_spending_vout as u32,
+        ),
+        script_sig: ScriptBuf::default(), // For a p2pkh script_sig is initially empty.
+        sequence: Sequence::MAX,
+        witness: Witness::default(),
+    };
+
+    let near_contract_spending_txout = TxOut {
+        value: OMNI_SPEND_AMOUNT,
+        script_pubkey: ScriptBuf(script_pubkey.as_bytes().to_vec()),
+    };
+
+    let near_contract_spending_change_txout = TxOut {
+        value: change_amount,
+        script_pubkey: ScriptBuf(bob.script_pubkey.as_bytes().to_vec()),
+    };
+
+    let near_contract_spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
+        .version(Version::One)
+        .lock_time(LockTime::from_height(1).unwrap())
+        .inputs(vec![near_contract_spending_txin])
+        .outputs(vec![
+            near_contract_spending_txout,
+            near_contract_spending_change_txout,
+        ])
+        .build();
 
     // let method_name = "generate_sighash_p2pkh";
     // let args = json!({
@@ -454,15 +460,6 @@ fn create_signature(big_r_hex: &str, s_hex: &str) -> Result<Signature, secp256k1
     Ok(signature)
 }
 
-fn main() {
-    let big_r = "03ACA6D62D6D74076ED555CC1F76C3B87E49255FB9036806F255A6B3A85E875A12";
-    let s = "266777C51..."; // Complete the scalar value
-
-    match create_signature(big_r, s) {
-        Ok(signature) => println!("Signature created successfully: {:?}", signature),
-        Err(e) => println!("Error creating signature: {:?}", e),
-    }
-}
 async fn send_transaction(
     client: &JsonRpcClient,
     request: methods::send_tx::RpcSendTransactionRequest,
@@ -486,60 +483,12 @@ async fn send_transaction(
     }
 }
 
-async fn get_nonce_and_block_hash(
-    client: &JsonRpcClient,
-    account_id: AccountId,
-    public_key: PublicKey,
-) -> Result<(u64, CryptoHash), Box<dyn std::error::Error>> {
-    let access_key_query_response = client
-        .call(methods::query::RpcQueryRequest {
-            block_reference: BlockReference::latest(),
-            request: QueryRequest::ViewAccessKey {
-                account_id: account_id.clone(),
-                public_key: public_key.clone(),
-            },
-        })
-        .await
-        .expect("Failed to call RPC");
+// fn read_config(filename: &str) -> Result<Config, Box<dyn std::error::Error>> {
+//     let mut file = File::open(filename)?;
+//     let mut contents = String::new();
+//     file.read_to_string(&mut contents)?;
+//     let config: Config = serde_json::from_str(&contents)?;
+//     Ok(config)
+// }
 
-    match access_key_query_response.kind {
-        QueryResponseKind::AccessKey(access_key) => {
-            Ok((access_key.nonce, access_key_query_response.block_hash))
-        }
-        _ => panic!("Failed to extract current nonce"),
-    }
-}
-
-fn read_config(filename: &str) -> Result<Config, Box<dyn std::error::Error>> {
-    let mut file = File::open(filename)?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
-    let config: Config = serde_json::from_str(&contents)?;
-    Ok(config)
-}
-
-fn setup_bitcoin_testnet() -> Result<bitcoind::BitcoinD, Box<dyn std::error::Error>> {
-    if std::env::var("CI_ENVIRONMENT").is_ok() {
-        let curr_dir_path = std::env::current_dir().unwrap();
-
-        let bitcoind_path = if cfg!(target_os = "macos") {
-            curr_dir_path.join("tests/bin").join("bitcoind-mac")
-        } else if cfg!(target_os = "linux") {
-            curr_dir_path.join("tests/bin").join("bitcoind-linux")
-        } else {
-            return Err(
-                std::io::Error::new(std::io::ErrorKind::Other, "Unsupported platform").into(),
-            );
-        };
-
-        let temp_dir = TempDir::new().expect("Failed to create temp dir");
-
-        let mut conf = bitcoind::Conf::default();
-        conf.tmpdir = Some(temp_dir.path().to_path_buf());
-        let bitcoind = bitcoind::BitcoinD::with_conf(bitcoind_path, &conf).unwrap();
-        Ok(bitcoind)
-    } else {
-        let bitcoind = bitcoind::BitcoinD::from_downloaded().unwrap();
-        Ok(bitcoind)
-    }
-}
+// fn setup_bitcoin_testnet() -> Result<bitcoind::BitcoinD, Box<dyn std::error::Error>> {}
