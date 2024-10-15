@@ -23,6 +23,11 @@ Since this example deploys the NEAR contract to the NEAR testnet, you need to ha
 Then run the following command to deploy the contract:
 
 ```bash
-just run bitcoin-signing-with-propagation
+just run bitcoin-signing-with-propagation --deploy
 ```
 
+If you want to run the test without deploying the contract, run the following command:
+
+```bash
+just run bitcoin-signing-with-propagation
+```
