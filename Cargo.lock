@@ -2438,7 +2438,7 @@ dependencies = [
 [[package]]
 name = "omni-transaction"
 version = "0.1.0"
-source = "git+https://github.com/edsonalcala/omni-transaction-rs.git?branch=feat/bitcoin-from-json-support#f997fff9e570507b6ed8289a1c029bfe84277782"
+source = "git+https://github.com/ilblackdragon/omni-transaction-rs?branch=master#79801150e7af1be6f9aeb7b6d2077d33fd129081"
 dependencies = [
  "borsh",
  "bs58 0.5.1",
