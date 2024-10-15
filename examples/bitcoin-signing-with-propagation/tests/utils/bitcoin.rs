@@ -116,69 +116,6 @@ impl<'a> BTCTestContext<'a> {
 
         Ok(master_key)
     }
-
-    pub fn get_utxo_for_address_string(
-        &self,
-        address: &str,
-    ) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error>> {
-        let min_conf = 1;
-        let max_conf = 9999999;
-        let include_unsafe = true;
-        let query_options = json!({});
-
-        let unspent_utxos: Vec<serde_json::Value> = self.client.call(
-            "listunspent",
-            &[
-                json!(min_conf),
-                json!(max_conf),
-                json!(vec![address.to_string()]),
-                json!(include_unsafe),
-                query_options,
-            ],
-        )?;
-
-        // Verify UTXO belongs to the address and has the correct amount
-        for utxo in unspent_utxos.iter() {
-            assert_eq!(
-                utxo["address"].as_str().unwrap(),
-                address.to_string(),
-                "UTXO doesn't belong to the address"
-            );
-        }
-
-        Ok(unspent_utxos)
-    }
-    pub fn get_utxo_for_address(
-        &self,
-        address: &Address,
-    ) -> Result<Vec<serde_json::Value>, Box<dyn std::error::Error>> {
-        let min_conf = 1;
-        let max_conf = 9999999;
-        let include_unsafe = true;
-        let query_options = json!({});
-
-        let unspent_utxos: Vec<serde_json::Value> = self.client.call(
-            "listunspent",
-            &[
-                json!(min_conf),
-                json!(max_conf),
-                json!(vec![address.to_string()]),
-                json!(include_unsafe),
-                query_options,
-            ],
-        )?;
-
-        // Verify UTXO belongs to the address and has the correct amount
-        for utxo in unspent_utxos.iter() {
-            assert_eq!(
-                utxo["address"].as_str().unwrap(),
-                address.to_string(),
-                "UTXO doesn't belong to the address"
-            );
-        }
-
-        Ok(unspent_utxos)
-    }
 }
 
 pub fn get_bitcoin_instance() -> Result<bitcoind::BitcoinD, Box<dyn std::error::Error>> {
