@@ -1,5 +1,5 @@
 use near_sdk::serde::Serialize;
-use near_sdk::{env, ext_contract, Promise};
+use near_sdk::{ext_contract, Promise};
 use near_sdk::{near, Gas, NearToken};
 
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
