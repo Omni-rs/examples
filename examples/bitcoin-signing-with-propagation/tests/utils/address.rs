@@ -150,7 +150,7 @@ mod tests {
 
         let btc_address = public_key_to_btc_address(derived_public_key, "testnet");
 
-        assert_eq!(btc_address, "mk65535111111111111111111111111111111111111");
-        assert_eq!(derived_public_key_hex, "04458506f68f2435939e686b67624d4ea03714a49f6c57548b6c9a3e93c96edb2977781d46bc27b12013c758e068025c64b31c8378bfa30d4d4f0fa8a6e4e56a6");
+        assert_eq!(btc_address, "n19iEMJE2L2YBfJFsXC8Gzs7Q2Z7TwdCqv");
+        assert_eq!(derived_public_key_hex, "0471f75dc56b971fbe52dd3e80d2f8532eb8905157556df39cb7338a67c80412640c869f717217ba5b916db6d7dc7d6a84220f8251e626adad62cac9c7d6f8e032");
     }
 }
