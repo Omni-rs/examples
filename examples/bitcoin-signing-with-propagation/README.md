@@ -19,3 +19,10 @@ Since this example deploys the NEAR contract to the NEAR testnet, you need to ha
     "private_key": "<your_private_key>"
 }
 ```
+
+Then run the following command to deploy the contract:
+
+```bash
+just run bitcoin-signing-with-propagation
+```
+

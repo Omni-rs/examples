@@ -3,7 +3,7 @@ use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use bitcoin::{bip32::Xpriv, Address, Network, ScriptBuf};
 use bitcoin::{PublicKey as BitcoinPublicKey, WPubkeyHash};
 use bitcoind::AddressType;
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::str::FromStr as _;
 
 pub struct UserInfo {
