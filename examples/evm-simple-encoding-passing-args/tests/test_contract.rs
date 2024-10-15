@@ -3,7 +3,6 @@ use omni_transaction::evm::utils::parse_eth_address;
 use serde_json::json;
 
 #[tokio::test]
-#[ignore]
 async fn test_simple_encoding_with_args() -> Result<(), Box<dyn std::error::Error>> {
     let sandbox = near_workspaces::sandbox().await?;
 
