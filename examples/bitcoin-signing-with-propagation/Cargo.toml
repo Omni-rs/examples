@@ -24,7 +24,6 @@ hex.workspace = true
 serde = { version = "1.0.166", features = ["derive"] }
 near-sdk = { version = "5.5.0", features = ["unit-testing"] }
 near-crypto = "0.26.0"
-tempfile = "3.3.0"
 bitcoin = { version = "0.32.0", default-features = false, features = [
     "std",
     "serde",
