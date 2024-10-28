@@ -1,12 +1,8 @@
 // Rust Bitcoin Dependencies
-use bitcoin::hashes::{ripemd160, sha256d, Hash};
-use bitcoin::opcodes::all::{OP_CHECKSIG, OP_DUP, OP_EQUALVERIFY, OP_HASH160};
-use bitcoin::script::Builder;
+use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::secp256k1::ecdsa::Signature;
 use bitcoin::secp256k1::{self, Message};
-use bitcoin::Network;
-use k256::elliptic_curve::sec1::ToEncodedPoint;
-use k256::sha2::{Digest, Sha256};
+use omni_testing_utilities::bitcoind::AddressType;
 // NEAR Dependencies
 use near_crypto::InMemorySigner;
 use near_jsonrpc_client::methods;
@@ -24,19 +20,18 @@ use omni_transaction::bitcoin::types::{
 };
 use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
 use omni_transaction::types::BITCOIN;
-// Other Dependencies
-use serde_json::json;
-use std::str::FromStr;
-use utils::near::{get_near_rpc_client, get_nonce_and_block_hash, send_transaction};
-
-mod utils;
-
-use utils::{
-    address::get_derived_address,
+// Omni Testing Utilities
+use omni_testing_utilities::{
+    address::{get_derived_address, get_public_key_hash},
     bitcoin::{get_bitcoin_instance, BTCTestContext},
     environment::get_user_account_info_from_file,
-    near::compile_and_deploy_contract,
+    near::{
+        compile_and_deploy_contract, get_near_rpc_client, get_nonce_and_block_hash,
+        send_transaction,
+    },
 };
+// Other Dependencies
+use serde_json::json;
 
 const OMNI_SPEND_AMOUNT: Amount = Amount::from_sat(500_000);
 const PATH: &str = "bitcoin-1";
@@ -67,62 +62,26 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     }
 
     // Prepare the BTC Test Context
-    let mut btc_test_context = BTCTestContext::new(btc_client).unwrap();
+    let btc_test_context = BTCTestContext::new(btc_client).unwrap();
 
     // Setup Bob (the receiver)
-    let bob = btc_test_context.setup_account().unwrap();
+    let bob = btc_test_context.setup_account(AddressType::Legacy).unwrap();
 
     // Get the derived address of the NEAR contract
     let derived_address = get_derived_address(&user_account.account_id, PATH);
-    let derived_public_key_bytes = derived_address.public_key.to_encoded_point(false); // Ensure this method exists
-    let derived_public_key_bytes_array = derived_public_key_bytes.as_bytes();
+    let near_contract_script_pubkey = get_public_key_hash(&derived_address);
 
-    // Calculate publish key hash
-    let sha256_hash = Sha256::digest(&derived_public_key_bytes_array);
-    let ripemd160_hash = ripemd160::Hash::hash(&sha256_hash);
+    btc_test_context.generate_to_derived_address(&derived_address)?;
 
-    // The script_pubkey for the NEAR contract to be the spender
-    let near_contract_script_pubkey = Builder::new()
-        .push_opcode(OP_DUP)
-        .push_opcode(OP_HASH160)
-        .push_slice(&ripemd160_hash.as_byte_array())
-        .push_opcode(OP_EQUALVERIFY)
-        .push_opcode(OP_CHECKSIG)
-        .into_script();
-
-    // In order to generate UTXOs, we parse the derived address to a bitcoin address and call the generate_to_address method
-    let near_contract_address = bitcoin::Address::from_str(&derived_address.address.to_string())?;
-    let near_contract_address = near_contract_address
-        .require_network(Network::Regtest)
+    // Now we need to get the UTXO of the NEAR contract, we use scantxoutset to get the first UTXO
+    let first_unspent_near_contract = btc_test_context
+        .scan_utxo_for_address_with_count(&derived_address, 1)
+        .unwrap()
+        .get(0)
         .unwrap();
-
-    btc_client.generate_to_address(101, &near_contract_address)?;
-
-    // Now we need to get the UTXO of the NEAR contract, we use scantxoutset to get the UTXO
-    let scan_txout_set_result: serde_json::Value = btc_client
-        .call(
-            "scantxoutset",
-            &[
-                json!("start"),
-                json!([{ "desc": format!("addr({})", near_contract_address) }]),
-            ],
-        )
-        .unwrap();
-
-    // Get the first UTXO
-    let first_unspent_near_contract = scan_txout_set_result
-        .as_object()
-        .unwrap()
-        .get("unspents")
-        .unwrap()
-        .as_array()
-        .unwrap()
-        .into_iter()
-        .next()
-        .expect("There should be at least one unspent output");
 
     // Generate more blocks to avoid issues with confirmations
-    btc_client.generate_to_address(101, &near_contract_address)?;
+    btc_test_context.generate_to_derived_address(derived_address)?;
 
     // Build the transaction where the sender is the derived address
     let near_contract_spending_txid_str = first_unspent_near_contract["txid"].as_str().unwrap();
@@ -156,7 +115,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
     let near_contract_spending_change_txout = TxOut {
         value: change_amount,
-        script_pubkey: ScriptBuf(near_contract_script_pubkey.as_bytes().to_vec()),
+        script_pubkey: ScriptBuf(near_contract_script_pubkey),
     };
 
     let mut near_contract_spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
@@ -170,8 +129,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
         .build();
 
     // We add the script_pubkey of the NEAR contract as the script_sig
-    near_contract_spending_tx.input[0].script_sig =
-        ScriptBuf(near_contract_script_pubkey.as_bytes().to_vec());
+    near_contract_spending_tx.input[0].script_sig = ScriptBuf(near_contract_script_pubkey);
 
     // Call the NEAR contract to generate the sighash
     let method_name = "generate_sighash_p2pkh";
@@ -193,17 +151,18 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     // Parse result
     if let QueryResponseKind::CallResult(call_result) = response.kind {
         if let Ok(result_str) = String::from_utf8(call_result.result.clone()) {
-            // Calculate the sighash
+            // Parse the result
             let result_bytes: Vec<u8> = result_str
                 .trim_matches(|c| c == '[' || c == ']') // Eliminar corchetes
                 .split(',') // Dividir por comas
                 .map(|s| s.trim().parse::<u8>().unwrap()) // Convertir cada parte a u8
                 .collect();
 
+            // Calculate the sighash
             let sighash_omni = sha256d::Hash::hash(&result_bytes);
             let msg_omni = Message::from_digest_slice(sighash_omni.as_byte_array()).unwrap();
 
-            // get the deposit amount for the mpc signer
+            // Get the deposit amount for the mpc signer
             let mpc_contract_account_id: &str = "v1.signer-prod.testnet";
 
             let request = methods::query::RpcQueryRequest {
@@ -220,24 +179,20 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
             let mut attached_deposit: u128 = 0;
 
             if let QueryResponseKind::CallResult(result) = response.kind {
-                println!("result: {:?}", result);
                 // Decode the byte array to a string
                 let result_str = String::from_utf8(result.result.clone()).unwrap();
-                println!("Decoded result: {}", result_str);
-
                 attached_deposit = result_str.trim_matches('"').parse::<u128>().unwrap();
             } else {
-                println!("No se pudo obtener el balance");
+                println!("Error getting the attached deposit");
             }
 
-            println!("attached_deposit: {:?}", attached_deposit);
-
+            // Create the args for the sign_sighash_p2pkh method
             let args = json!({
                 "sighash_p2pkh": hex::encode(msg_omni.as_ref()),
                 "attached_deposit": attached_deposit.to_string()
             });
 
-            // 1.- Create the action
+            // Create the action
             let signing_action = Action::FunctionCall(Box::new(FunctionCallAction {
                 method_name: "sign_sighash_p2pkh".to_string(),
                 args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
@@ -256,7 +211,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
             let nonce = nonce + 1;
 
-            // 2.- Create the transaction
+            // Create the transaction
             let near_tx: Transaction = Transaction::V0(TransactionV0 {
                 signer_id: user_account.account_id.clone(),
                 public_key: signer.public_key(),
@@ -266,21 +221,18 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
                 actions: vec![signing_action.clone(), signing_action.clone()],
             });
 
-            // 3.- Sign the transaction
+            // Sign the transaction
             let signer = &signer.into();
             let signed_transaction = near_tx.sign(signer);
 
-            // 4.- Send the transaction
+            // Send the transaction
             let request = methods::send_tx::RpcSendTransactionRequest {
                 signed_transaction,
                 wait_until: TxExecutionStatus::Final,
             };
 
             let signer_response = send_transaction(&near_json_rpc_client, request).await?;
-            println!("signer_response: {:?}", signer_response);
-
             let (big_r, s) = extract_big_r_and_s(&signer_response).unwrap();
-
             let signature_built = create_signature(&big_r, &s);
 
             // Encode the signature
@@ -289,22 +241,16 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
                 sighash_type: bitcoin::EcdsaSighashType::All,
             };
 
-            // Create the public key from the derived address
-            let secp_pubkey =
-                bitcoin::secp256k1::PublicKey::from_slice(derived_public_key_bytes_array)
-                    .expect("Invalid public key");
-
-            let bitcoin_pubkey = bitcoin::PublicKey::new_uncompressed(secp_pubkey);
-
-            let script_sig_new = Builder::new()
-                .push_slice(signature.serialize())
-                .push_key(&bitcoin_pubkey)
-                .into_script();
+            // Build the script sig
+            let script_sig_new = omni_testing_utilities::address::build_script_sig_as_bytes(
+                derived_address,
+                signature,
+            );
 
             // Assign script_sig to txin
-            let omni_script_sig = ScriptBuf(script_sig_new.as_bytes().to_vec());
+            let omni_script_sig = ScriptBuf(script_sig_new);
 
-            // Encode the script sig
+            // Encode the transaction with the script sig
             let encoded_omni_tx = near_contract_spending_tx.build_with_script_sig(
                 0,
                 omni_script_sig,
@@ -313,7 +259,6 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
             // Convert the transaction to a hexadecimal string
             let hex_omni_tx = hex::encode(encoded_omni_tx);
-
             let maxfeerate = 0.10;
             let maxburnamount = 10.00;
 
@@ -326,8 +271,6 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
                 .unwrap();
 
             println!("raw_tx_result: {:?}", raw_tx_result);
-
-            btc_client.generate_to_address(1, &near_contract_address)?;
         }
     }
 
