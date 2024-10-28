@@ -203,16 +203,46 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
             let sighash_omni = sha256d::Hash::hash(&result_bytes);
             let msg_omni = Message::from_digest_slice(sighash_omni.as_byte_array()).unwrap();
 
+            // get the deposit amount for the mpc signer
+            let mpc_contract_account_id: &str = "v1.signer-prod.testnet";
+
+            let request = methods::query::RpcQueryRequest {
+                block_reference: Finality::Final.into(),
+                request: QueryRequest::CallFunction {
+                    account_id: mpc_contract_account_id.parse().unwrap(),
+                    method_name: "experimental_signature_deposit".to_string(),
+                    args: FunctionArgs::from(vec![]),
+                },
+            };
+
+            let response = near_json_rpc_client.call(request).await?;
+
+            let mut attached_deposit: u128 = 0;
+
+            if let QueryResponseKind::CallResult(result) = response.kind {
+                println!("result: {:?}", result);
+                // Decode the byte array to a string
+                let result_str = String::from_utf8(result.result.clone()).unwrap();
+                println!("Decoded result: {}", result_str);
+
+                attached_deposit = result_str.trim_matches('"').parse::<u128>().unwrap();
+            } else {
+                println!("No se pudo obtener el balance");
+            }
+
+            println!("attached_deposit: {:?}", attached_deposit);
+
             let args = json!({
-                "sighash_p2pkh": hex::encode(msg_omni.as_ref())
+                "sighash_p2pkh": hex::encode(msg_omni.as_ref()),
+                "attached_deposit": attached_deposit.to_string()
             });
 
             // 1.- Create the action
             let signing_action = Action::FunctionCall(Box::new(FunctionCallAction {
                 method_name: "sign_sighash_p2pkh".to_string(),
                 args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
-                gas: 300_000_000_000_000,
-                deposit: 100000000000000000000000,
+                gas: 100_000_000_000_000,
+                deposit: 1000000000000000000000000,
             }));
 
             let result = get_nonce_and_block_hash(
@@ -233,7 +263,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
                 nonce,
                 receiver_id: user_account.account_id.clone(),
                 block_hash,
-                actions: vec![signing_action],
+                actions: vec![signing_action.clone(), signing_action.clone()],
             });
 
             // 3.- Sign the transaction
@@ -247,6 +277,8 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
             };
 
             let signer_response = send_transaction(&near_json_rpc_client, request).await?;
+            println!("signer_response: {:?}", signer_response);
+
             let (big_r, s) = extract_big_r_and_s(&signer_response).unwrap();
 
             let signature_built = create_signature(&big_r, &s);

@@ -237,7 +237,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "340e09e8399c7bd8912f495af6aa58bea0c9214773417ffaa8f6460f93aaee56"
 
 [[package]]
-name = "bitcoin-signing-with-propagation"
+name = "bitcoin-multiple-signing-with-propagation"
 version = "0.0.1"
 dependencies = [
  "bitcoin",
@@ -256,6 +256,25 @@ dependencies = [
  "serde",
  "serde_json",
  "sha3",
+ "tokio",
+]
+
+[[package]]
+name = "bitcoin-signing-with-propagation"
+version = "0.0.1"
+dependencies = [
+ "bitcoin",
+ "bitcoind-json-rpc-regtest",
+ "hex",
+ "near-crypto",
+ "near-jsonrpc-client",
+ "near-jsonrpc-primitives",
+ "near-primitives",
+ "near-sdk",
+ "near-workspaces",
+ "omni-transaction",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 
@@ -1693,7 +1712,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if 1.0.0",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -1883,6 +1902,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35cbb989542587b47205e608324ddd391f0cee1c22b4b64ae49f458334b95907"
 dependencies = [
  "borsh",
+ "schemars",
  "serde",
 ]
 
@@ -2142,6 +2162,7 @@ dependencies = [
  "near-token",
  "near-vm-runner",
  "once_cell",
+ "schemars",
  "serde",
  "serde_json",
  "wee_alloc",
@@ -2438,11 +2459,12 @@ dependencies = [
 [[package]]
 name = "omni-transaction"
 version = "0.1.0"
-source = "git+https://github.com/ilblackdragon/omni-transaction-rs?branch=master#79801150e7af1be6f9aeb7b6d2077d33fd129081"
+source = "git+https://github.com/EdsonAlcala/omni-transaction-rs?branch=master#eb62431f7a3a6907740287d499b3bcc72432bde0"
 dependencies = [
  "borsh",
  "bs58 0.5.1",
  "hex",
+ "near-account-id",
  "near-sdk",
  "rlp",
  "schemars",
