@@ -237,7 +237,51 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "340e09e8399c7bd8912f495af6aa58bea0c9214773417ffaa8f6460f93aaee56"
 
 [[package]]
-name = "bitcoin-signing-with-propagation"
+name = "bitcoin-multiple-signing-with-propagation-segwit"
+version = "0.0.1"
+dependencies = [
+ "bitcoin",
+ "bs58 0.5.1",
+ "hex",
+ "k256",
+ "near-crypto 0.25.0",
+ "near-jsonrpc-client 0.12.0 (git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1)",
+ "near-jsonrpc-primitives 0.25.0",
+ "near-primitives 0.25.0",
+ "near-sdk",
+ "near-workspaces 0.14.0",
+ "omni-testing-utilities",
+ "omni-transaction",
+ "ripemd",
+ "serde_json",
+ "sha3",
+ "tokio",
+]
+
+[[package]]
+name = "bitcoin-signing-with-propagation-legacy"
+version = "0.0.1"
+dependencies = [
+ "bitcoin",
+ "bs58 0.5.1",
+ "hex",
+ "k256",
+ "near-crypto 0.25.0",
+ "near-jsonrpc-client 0.12.0 (git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1)",
+ "near-jsonrpc-primitives 0.25.0",
+ "near-primitives 0.25.0",
+ "near-sdk",
+ "near-workspaces 0.14.0",
+ "omni-testing-utilities",
+ "omni-transaction",
+ "ripemd",
+ "serde_json",
+ "sha3",
+ "tokio",
+]
+
+[[package]]
+name = "bitcoin-signing-with-propagation-segwit"
 version = "0.0.1"
 dependencies = [
  "bitcoin",
@@ -260,6 +304,17 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-simple-encoding"
+version = "0.0.1"
+dependencies = [
+ "near-sdk",
+ "near-workspaces 0.14.0",
+ "omni-transaction",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "bitcoin-simple-encoding-passing-args"
 version = "0.0.1"
 dependencies = [
  "near-sdk",
