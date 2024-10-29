@@ -218,7 +218,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
                 nonce,
                 receiver_id: user_account.account_id.clone(),
                 block_hash,
-                actions: vec![signing_action.clone(), signing_action.clone()],
+                actions: vec![signing_action.clone()],
             });
 
             // Sign the transaction
