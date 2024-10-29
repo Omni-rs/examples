@@ -1,5 +1,5 @@
 [package]
-name = "bitcoin-signing-with-propagation"
+name = "bitcoin-signing-with-propagation-legacy"
 publish.workspace = true
 version.workspace = true
 edition.workspace = true
