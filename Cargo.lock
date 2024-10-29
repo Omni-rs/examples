@@ -2749,6 +2749,7 @@ dependencies = [
 [[package]]
 name = "omni-testing-utilities"
 version = "0.1.0"
+source = "git+https://github.com/Omni-rs/omni-testing-utilities.git?branch=feat/v1#f80788088cfcac9b9912956d60ced42478b39702"
 dependencies = [
  "bitcoin",
  "bitcoind-json-rpc-regtest",
