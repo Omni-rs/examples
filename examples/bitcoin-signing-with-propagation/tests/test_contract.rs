@@ -74,14 +74,14 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     btc_test_context.generate_to_derived_address(&derived_address)?;
 
     // Now we need to get the UTXO of the NEAR contract, we use scantxoutset to get the first UTXO
-    let first_unspent_near_contract = btc_test_context
+    let binding = btc_test_context
         .scan_utxo_for_address_with_count(&derived_address, 1)
-        .unwrap()
-        .get(0)
         .unwrap();
 
+    let first_unspent_near_contract = binding.first().unwrap();
+
     // Generate more blocks to avoid issues with confirmations
-    btc_test_context.generate_to_derived_address(derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
 
     // Build the transaction where the sender is the derived address
     let near_contract_spending_txid_str = first_unspent_near_contract["txid"].as_str().unwrap();
@@ -115,7 +115,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
     let near_contract_spending_change_txout = TxOut {
         value: change_amount,
-        script_pubkey: ScriptBuf(near_contract_script_pubkey),
+        script_pubkey: ScriptBuf(near_contract_script_pubkey.clone()),
     };
 
     let mut near_contract_spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
@@ -180,7 +180,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
             if let QueryResponseKind::CallResult(result) = response.kind {
                 // Decode the byte array to a string
-                let result_str = String::from_utf8(result.result.clone()).unwrap();
+                let result_str = String::from_utf8(result.result).unwrap();
                 attached_deposit = result_str.trim_matches('"').parse::<u128>().unwrap();
             } else {
                 println!("Error getting the attached deposit");
