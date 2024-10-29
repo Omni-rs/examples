@@ -245,7 +245,7 @@ dependencies = [
  "hex",
  "k256",
  "near-crypto 0.25.0",
- "near-jsonrpc-client 0.12.0 (git+https://github.com/EdsonAlcala/near-jsonrpc-client-rs?tag=v0.12.1)",
+ "near-jsonrpc-client 0.12.0 (git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1)",
  "near-jsonrpc-primitives 0.25.0",
  "near-primitives 0.25.0",
  "near-sdk",
@@ -2064,6 +2064,24 @@ dependencies = [
 name = "near-jsonrpc-client"
 version = "0.12.0"
 source = "git+https://github.com/EdsonAlcala/near-jsonrpc-client-rs?tag=v0.12.1#bbb519ef1869c66655f334eaa57fa284770bc33a"
+dependencies = [
+ "borsh",
+ "lazy_static",
+ "log",
+ "near-chain-configs 0.25.0",
+ "near-crypto 0.25.0",
+ "near-jsonrpc-primitives 0.25.0",
+ "near-primitives 0.25.0",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "near-jsonrpc-client"
+version = "0.12.0"
+source = "git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1#bbb519ef1869c66655f334eaa57fa284770bc33a"
 dependencies = [
  "borsh",
  "lazy_static",
