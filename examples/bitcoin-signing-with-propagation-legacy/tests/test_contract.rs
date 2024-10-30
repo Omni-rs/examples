@@ -1,6 +1,7 @@
 // Rust Bitcoin Dependencies
 use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::secp256k1::Message;
+use omni_testing_utilities::address::get_script_pub_key;
 use omni_testing_utilities::bitcoind::AddressType;
 // NEAR Dependencies
 use near_crypto::InMemorySigner;
@@ -20,7 +21,7 @@ use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
 use omni_transaction::types::BITCOIN;
 // Omni Testing Utilities
 use omni_testing_utilities::{
-    address::{get_derived_address, get_public_key_hash},
+    address::get_derived_address,
     bitcoin::{get_bitcoin_instance, BTCTestContext},
     environment::get_user_account_info_from_file,
     near::{
@@ -68,7 +69,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
     // Get the derived address of the NEAR contract
     let derived_address = get_derived_address(&user_account.account_id, PATH);
-    let near_contract_script_pubkey = get_public_key_hash(&derived_address);
+    let near_contract_script_pubkey = get_script_pub_key(&derived_address);
 
     btc_test_context.generate_to_derived_address(&derived_address)?;
 

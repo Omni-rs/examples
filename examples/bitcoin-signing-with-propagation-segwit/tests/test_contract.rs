@@ -1,8 +1,10 @@
 // Rust Bitcoin Dependencies
 use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::secp256k1::ecdsa::Signature;
+use bitcoin::secp256k1::PublicKey as BitcoinSecp256k1PublicKey;
 use bitcoin::secp256k1::{self, Message};
-use omni_testing_utilities::bitcoind::AddressType;
+use bitcoin::Witness as BitcoinWitness;
+use bitcoin::{ScriptBuf as BitcoinScriptBuf, WPubkeyHash};
 // NEAR Dependencies
 use near_crypto::InMemorySigner;
 use near_jsonrpc_client::methods;
@@ -12,6 +14,7 @@ use near_primitives::action::{Action, FunctionCallAction};
 use near_primitives::transaction::{Transaction, TransactionV0};
 use near_primitives::types::{BlockReference, Finality, FunctionArgs};
 use near_primitives::views::{FinalExecutionStatus, QueryRequest, TxExecutionStatus};
+use omni_testing_utilities::address::get_public_key_as_bytes;
 // Omni Transaction Dependencies
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
@@ -21,6 +24,7 @@ use omni_transaction::bitcoin::types::{
 use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
 use omni_transaction::types::BITCOIN;
 // Omni Testing Utilities
+use omni_testing_utilities::bitcoind::AddressType;
 use omni_testing_utilities::{
     address::{get_derived_address, get_public_key_hash},
     bitcoin::{get_bitcoin_instance, BTCTestContext},
@@ -37,7 +41,7 @@ const OMNI_SPEND_AMOUNT: Amount = Amount::from_sat(500_000);
 const PATH: &str = "bitcoin-1";
 
 #[tokio::test]
-async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
+async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let should_deploy = std::env::var("DEPLOY").is_ok();
 
@@ -69,7 +73,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
     // Get the derived address of the NEAR contract
     let derived_address = get_derived_address(&user_account.account_id, PATH);
-    let near_contract_script_pubkey = get_public_key_hash(&derived_address);
+    let public_key_hash = get_public_key_hash(&derived_address);
 
     btc_test_context.generate_to_derived_address(&derived_address)?;
 
@@ -104,7 +108,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     // Create the transaction output
     let near_contract_spending_txout = TxOut {
         value: OMNI_SPEND_AMOUNT,
-        script_pubkey: ScriptBuf(bob.script_pubkey.as_bytes().to_vec()),
+        script_pubkey: ScriptBuf(bob.address.script_pubkey().into_bytes()),
     };
 
     let utxo_amount = Amount::from_sat(
@@ -113,13 +117,15 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
     let change_amount: Amount = utxo_amount - OMNI_SPEND_AMOUNT - Amount::from_sat(1000); // 1000 satoshis for fee
 
+    let near_p2wpkh = WPubkeyHash::from_slice(&public_key_hash).unwrap();
+
     let near_contract_spending_change_txout = TxOut {
         value: change_amount,
-        script_pubkey: ScriptBuf(near_contract_script_pubkey.clone()),
+        script_pubkey: ScriptBuf(BitcoinScriptBuf::new_p2wpkh(&near_p2wpkh).into_bytes()),
     };
 
     let mut near_contract_spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
-        .version(Version::One)
+        .version(Version::Two)
         .lock_time(LockTime::from_height(1).unwrap())
         .inputs(vec![near_contract_spending_txin])
         .outputs(vec![
@@ -128,13 +134,17 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
         ])
         .build();
 
-    // We add the script_pubkey of the NEAR contract as the script_sig
-    near_contract_spending_tx.input[0].script_sig = ScriptBuf(near_contract_script_pubkey);
+    let script_pubkey_bob = BitcoinScriptBuf::new_p2wpkh(&near_p2wpkh)
+        .p2wpkh_script_code()
+        .unwrap();
 
     // Call the NEAR contract to generate the sighash
-    let method_name = "generate_sighash_p2pkh";
+    let method_name = "generate_sighash_p2wpkh";
     let args = json!({
-        "bitcoin_tx": near_contract_spending_tx
+        "bitcoin_tx": near_contract_spending_tx,
+        "input_index": 0,
+        "script_code": ScriptBuf(script_pubkey_bob.into_bytes()),
+        "value": OMNI_SPEND_AMOUNT.to_sat()
     });
 
     let request = methods::query::RpcQueryRequest {
@@ -188,13 +198,13 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
             // Create the args for the sign_sighash_p2pkh method
             let args = json!({
-                "sighash_p2pkh": hex::encode(msg_omni.as_ref()),
+                "sighash_p2wpkh": hex::encode(msg_omni.as_ref()),
                 "attached_deposit": attached_deposit.to_string()
             });
 
             // Create the action
             let signing_action = Action::FunctionCall(Box::new(FunctionCallAction {
-                method_name: "sign_sighash_p2pkh".to_string(),
+                method_name: "sign_sighash_p2wpkh".to_string(),
                 args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
                 gas: 100_000_000_000_000,
                 deposit: 1000000000000000000000000,
@@ -241,20 +251,18 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
                 sighash_type: bitcoin::EcdsaSighashType::All,
             };
 
-            // Build the script sig
-            let script_sig_new = omni_testing_utilities::address::build_script_sig_as_bytes(
-                derived_address,
-                signature,
-            );
+            // Create the witness
+            let public_key_as_bytes = get_public_key_as_bytes(&derived_address);
 
-            // Assign script_sig to txin
-            let omni_script_sig = ScriptBuf(script_sig_new);
+            let bitcoin_secp256k1_public_key =
+                BitcoinSecp256k1PublicKey::from_slice(&public_key_as_bytes).unwrap();
 
-            // Encode the transaction with the script sig
-            let encoded_omni_tx = near_contract_spending_tx.build_with_script_sig(
+            let witness = BitcoinWitness::p2wpkh(&signature, &bitcoin_secp256k1_public_key);
+
+            let encoded_omni_tx = near_contract_spending_tx.build_with_witness(
                 0,
-                omni_script_sig,
-                TransactionType::P2PKH,
+                witness.to_vec(),
+                TransactionType::P2WPKH,
             );
 
             // Convert the transaction to a hexadecimal string

@@ -4,6 +4,7 @@ use near_sdk::{near, Gas, NearToken};
 
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::EcdsaSighashType;
+use omni_transaction::bitcoin::types::ScriptBuf;
 
 const MPC_CONTRACT_ACCOUNT_ID: &str = "v1.signer-prod.testnet";
 const GAS: Gas = Gas::from_tgas(50);
@@ -31,17 +32,23 @@ pub struct Contract {}
 
 #[near]
 impl Contract {
-    pub fn generate_sighash_p2pkh(&self, bitcoin_tx: BitcoinTransaction) -> Vec<u8> {
-        bitcoin_tx.build_for_signing_legacy(EcdsaSighashType::All)
+    pub fn generate_sighash_p2wpkh(
+        &self,
+        bitcoin_tx: BitcoinTransaction,
+        input_index: usize,
+        script_code: &ScriptBuf,
+        value: u64,
+    ) -> Vec<u8> {
+        bitcoin_tx.build_for_signing_segwit(EcdsaSighashType::All, input_index, script_code, value)
     }
 
-    pub fn sign_sighash_p2pkh(
+    pub fn sign_sighash_p2wpkh(
         &self,
-        sighash_p2pkh: String,
+        sighash_p2wpkh: String,
         attached_deposit: NearToken,
     ) -> Promise {
         // Decode the hex string back to bytes
-        let payload_vec = hex::decode(sighash_p2pkh).expect("Invalid hex string");
+        let payload_vec = hex::decode(sighash_p2wpkh).expect("Invalid hex string");
 
         // Ensure the payload is exactly 32 bytes
         let payload: [u8; 32] = payload_vec
