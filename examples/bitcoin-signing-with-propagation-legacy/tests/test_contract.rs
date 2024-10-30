@@ -1,17 +1,15 @@
 // Rust Bitcoin Dependencies
 use bitcoin::hashes::{sha256d, Hash};
-use bitcoin::secp256k1::ecdsa::Signature;
-use bitcoin::secp256k1::{self, Message};
+use bitcoin::secp256k1::Message;
 use omni_testing_utilities::bitcoind::AddressType;
 // NEAR Dependencies
 use near_crypto::InMemorySigner;
 use near_jsonrpc_client::methods;
-use near_jsonrpc_client::methods::tx::RpcTransactionResponse;
 use near_jsonrpc_primitives::types::query::QueryResponseKind;
 use near_primitives::action::{Action, FunctionCallAction};
 use near_primitives::transaction::{Transaction, TransactionV0};
 use near_primitives::types::{BlockReference, Finality, FunctionArgs};
-use near_primitives::views::{FinalExecutionStatus, QueryRequest, TxExecutionStatus};
+use near_primitives::views::{QueryRequest, TxExecutionStatus};
 // Omni Transaction Dependencies
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
@@ -29,6 +27,7 @@ use omni_testing_utilities::{
         compile_and_deploy_contract, get_near_rpc_client, get_nonce_and_block_hash,
         send_transaction,
     },
+    signature::{create_signature, extract_big_r_and_s},
 };
 // Other Dependencies
 use serde_json::json;
@@ -120,7 +119,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
     let mut near_contract_spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
         .version(Version::One)
-        .lock_time(LockTime::from_height(1).unwrap())
+        .lock_time(LockTime::from_height(0).unwrap())
         .inputs(vec![near_contract_spending_txin])
         .outputs(vec![
             near_contract_spending_txout,
@@ -218,7 +217,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
                 nonce,
                 receiver_id: user_account.account_id.clone(),
                 block_hash,
-                actions: vec![signing_action.clone()],
+                actions: vec![signing_action],
             });
 
             // Sign the transaction
@@ -275,51 +274,4 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     }
 
     Ok(())
-}
-
-fn extract_big_r_and_s(response: &RpcTransactionResponse) -> Result<(String, String), String> {
-    if let Some(near_primitives::views::FinalExecutionOutcomeViewEnum::FinalExecutionOutcome(
-        final_outcome,
-    )) = &response.final_execution_outcome
-    {
-        if let FinalExecutionStatus::SuccessValue(success_value) = &final_outcome.status {
-            let success_value_str =
-                String::from_utf8(success_value.clone()).map_err(|e| e.to_string())?;
-            let inner: serde_json::Value =
-                serde_json::from_str(&success_value_str).map_err(|e| e.to_string())?;
-
-            let big_r = inner["big_r"]["affine_point"]
-                .as_str()
-                .ok_or("Missing big_r affine_point")?;
-            let s = inner["s"]["scalar"].as_str().ok_or("Missing s scalar")?;
-
-            return Ok((big_r.to_string(), s.to_string()));
-        }
-    }
-
-    Err("Failed to extract big_r and s".to_string())
-}
-
-fn create_signature(big_r_hex: &str, s_hex: &str) -> Result<Signature, secp256k1::Error> {
-    // Convert hex strings to byte arrays
-    let big_r_bytes = hex::decode(big_r_hex).unwrap();
-    let s_bytes = hex::decode(s_hex).unwrap();
-
-    // Remove the first byte from big_r (compressed point indicator)
-    let big_r_x_bytes = &big_r_bytes[1..];
-
-    // Ensure the byte arrays are the correct length
-    if big_r_x_bytes.len() != 32 || s_bytes.len() != 32 {
-        return Err(secp256k1::Error::InvalidSignature);
-    }
-
-    // Create the signature from the bytes
-    let mut signature_bytes = [0u8; 64];
-    signature_bytes[..32].copy_from_slice(big_r_x_bytes);
-    signature_bytes[32..].copy_from_slice(&s_bytes);
-
-    // Create the signature object
-    let signature = Signature::from_compact(&signature_bytes)?;
-
-    Ok(signature)
 }

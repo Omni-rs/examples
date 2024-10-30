@@ -314,17 +314,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bitcoin-simple-encoding-passing-args"
-version = "0.0.1"
-dependencies = [
- "near-sdk",
- "near-workspaces 0.14.0",
- "omni-transaction",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "bitcoin-units"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2118,24 +2107,6 @@ dependencies = [
 [[package]]
 name = "near-jsonrpc-client"
 version = "0.12.0"
-source = "git+https://github.com/EdsonAlcala/near-jsonrpc-client-rs?tag=v0.12.1#bbb519ef1869c66655f334eaa57fa284770bc33a"
-dependencies = [
- "borsh",
- "lazy_static",
- "log",
- "near-chain-configs 0.25.0",
- "near-crypto 0.25.0",
- "near-jsonrpc-primitives 0.25.0",
- "near-primitives 0.25.0",
- "reqwest",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "near-jsonrpc-client"
-version = "0.12.0"
 source = "git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1#bbb519ef1869c66655f334eaa57fa284770bc33a"
 dependencies = [
  "borsh",
@@ -2822,7 +2793,7 @@ dependencies = [
 [[package]]
 name = "omni-testing-utilities"
 version = "0.1.0"
-source = "git+https://github.com/Omni-rs/omni-testing-utilities.git?branch=feat/v1#f80788088cfcac9b9912956d60ced42478b39702"
+source = "git+https://github.com/Omni-rs/omni-testing-utilities.git?branch=main#b053a5357de339dae864f4c6df9a9a77ad12a4a1"
 dependencies = [
  "bitcoin",
  "bitcoind-json-rpc-regtest",
@@ -2830,7 +2801,7 @@ dependencies = [
  "hex",
  "k256",
  "near-crypto 0.25.0",
- "near-jsonrpc-client 0.12.0 (git+https://github.com/EdsonAlcala/near-jsonrpc-client-rs?tag=v0.12.1)",
+ "near-jsonrpc-client 0.12.0 (git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1)",
  "near-jsonrpc-primitives 0.25.0",
  "near-primitives 0.25.0",
  "near-sdk",
@@ -2839,6 +2810,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha3",
+ "tempfile",
 ]
 
 [[package]]
