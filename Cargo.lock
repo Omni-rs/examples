@@ -237,7 +237,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "340e09e8399c7bd8912f495af6aa58bea0c9214773417ffaa8f6460f93aaee56"
 
 [[package]]
-name = "bitcoin-signing-with-propagation-legacy"
+name = "bitcoin-signing-segwit"
 version = "0.0.1"
 dependencies = [
  "bitcoin",
@@ -259,7 +259,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bitcoin-signing-with-propagation-segwit"
+name = "bitcoin-signing-with-propagation-legacy"
 version = "0.0.1"
 dependencies = [
  "bitcoin",

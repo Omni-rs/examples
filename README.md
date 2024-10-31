@@ -59,9 +59,9 @@ The recommendation is to go thought each example and read the annotated integrat
 ### Bitcoin
 
 - [x] [Simple encoding](./examples/bitcoin-simple-encoding)
-- [x] [Simple encoding passing args](./examples/bitcoin-simple-encoding-passing-args)
-- [ ] [Simple encoding with signature](#)
-- [ ] [Simple signing](#)
+- [ ] [Simple encoding passing args](./examples/bitcoin-simple-encoding-passing-args)
+- [ ] [Simple signing (legacy)](#)
+- [x] [Simple signing (segwit)](./examples/bitcoin-signing-segwit/)
 - [x] [Bitcoin signing with propagation (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
-- [x] [Bitcoin signing with propagation (segwit)](./examples/bitcoin-signing-with-propagation-segwit)
-- [x] [Bitcoin multiple signing with propagation (segwit)](./examples/bitcoin-multiple-signing-with-propagation-segwit)
+- [ ] [Bitcoin signing with propagation (segwit)](#)
+- [ ] [Bitcoin multiple signing with propagation (segwit)](./examples/bitcoin-multiple-signing-with-propagation-segwit)

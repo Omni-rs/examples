@@ -1,4 +1,4 @@
-# Bitcoin Signing with Propagation (Segwit)
+# Bitcoin Signing (Segwit)
 
 This example demonstrates how to sign a Bitcoin transaction (segwit) using the MPC  (Multi-Party Computation) signer from a contract and propagate the transaction to the Bitcoin network (RegTest mode).
 
@@ -23,11 +23,11 @@ Since this example deploys the NEAR contract to the NEAR testnet, you need to ha
 Then run the following command to deploy the contract:
 
 ```bash
-just run bitcoin-signing-with-propagation-segwit --deploy
+just run bitcoin-signing-segwit --deploy
 ```
 
 If you want to run the test without deploying the contract, run the following command:
 
 ```bash
-just run bitcoin-signing-with-propagation-segwit
+just run bitcoin-signing-segwit
 ```
