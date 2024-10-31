@@ -1,20 +1,18 @@
 // Rust Bitcoin Dependencies
 use bitcoin::hashes::{sha256d, Hash};
-use bitcoin::secp256k1::ecdsa::Signature;
-use bitcoin::secp256k1::PublicKey as BitcoinSecp256k1PublicKey;
-use bitcoin::secp256k1::{self, Message};
+use bitcoin::secp256k1::{Message, PublicKey as BitcoinSecp256k1PublicKey, Secp256k1};
 use bitcoin::Witness as BitcoinWitness;
 use bitcoin::{ScriptBuf as BitcoinScriptBuf, WPubkeyHash};
 // NEAR Dependencies
 use near_crypto::InMemorySigner;
 use near_jsonrpc_client::methods;
-use near_jsonrpc_client::methods::tx::RpcTransactionResponse;
 use near_jsonrpc_primitives::types::query::QueryResponseKind;
 use near_primitives::action::{Action, FunctionCallAction};
 use near_primitives::transaction::{Transaction, TransactionV0};
 use near_primitives::types::{BlockReference, Finality, FunctionArgs};
-use near_primitives::views::{FinalExecutionStatus, QueryRequest, TxExecutionStatus};
+use near_primitives::views::{QueryRequest, TxExecutionStatus};
 use omni_testing_utilities::address::get_public_key_as_bytes;
+use omni_testing_utilities::signature::{create_signature, extract_big_r_and_s};
 // Omni Transaction Dependencies
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
@@ -26,7 +24,7 @@ use omni_transaction::types::BITCOIN;
 // Omni Testing Utilities
 use omni_testing_utilities::bitcoind::AddressType;
 use omni_testing_utilities::{
-    address::{get_derived_address, get_public_key_hash},
+    address::{get_derived_address_for_segwit, get_public_key_hash_2},
     bitcoin::{get_bitcoin_instance, BTCTestContext},
     environment::get_user_account_info_from_file,
     near::{
@@ -69,11 +67,17 @@ async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
     let btc_test_context = BTCTestContext::new(btc_client).unwrap();
 
     // Setup Bob (the receiver)
-    let bob = btc_test_context.setup_account(AddressType::Legacy).unwrap();
+    let bob = btc_test_context.setup_account(AddressType::Bech32).unwrap();
 
     // Get the derived address of the NEAR contract
-    let derived_address = get_derived_address(&user_account.account_id, PATH);
-    let public_key_hash = get_public_key_hash(&derived_address);
+    let derived_address = get_derived_address_for_segwit(&user_account.account_id, PATH);
+    let public_key_hash = get_public_key_hash_2(&derived_address);
+
+    println!("Derived address: {:?}", derived_address.address);
+    println!(
+        "Public key hash: {:?}",
+        hex::encode(public_key_hash.clone())
+    );
 
     btc_test_context.generate_to_derived_address(&derived_address)?;
 
@@ -100,15 +104,9 @@ async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
             near_contract_spending_txid,
             near_contract_spending_vout as u32,
         ),
-        script_sig: ScriptBuf::default(),
-        sequence: Sequence::MAX,
-        witness: Witness::default(),
-    };
-
-    // Create the transaction output
-    let near_contract_spending_txout = TxOut {
-        value: OMNI_SPEND_AMOUNT,
-        script_pubkey: ScriptBuf(bob.address.script_pubkey().into_bytes()),
+        script_sig: ScriptBuf::default(), // For a p2wpkh script_sig is empty.
+        sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
+        witness: Witness::default(), // Filled in after signing.
     };
 
     let utxo_amount = Amount::from_sat(
@@ -117,8 +115,25 @@ async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
 
     let change_amount: Amount = utxo_amount - OMNI_SPEND_AMOUNT - Amount::from_sat(1000); // 1000 satoshis for fee
 
+    println!(
+        "DEBUG ITEM BOB SCRIPT PUBKEY {}",
+        bob.address.clone().script_pubkey()
+    );
+
+    // Create the transaction output
+    let near_contract_spending_txout = TxOut {
+        value: OMNI_SPEND_AMOUNT,
+        script_pubkey: ScriptBuf(bob.address.script_pubkey().into_bytes()),
+    };
+
     let near_p2wpkh = WPubkeyHash::from_slice(&public_key_hash).unwrap();
 
+    println!(
+        "DEBUG ITEM NEAR P2WPKH {}",
+        BitcoinScriptBuf::new_p2wpkh(&near_p2wpkh)
+    );
+
+    // Create the change output
     let near_contract_spending_change_txout = TxOut {
         value: change_amount,
         script_pubkey: ScriptBuf(BitcoinScriptBuf::new_p2wpkh(&near_p2wpkh).into_bytes()),
@@ -126,7 +141,7 @@ async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
 
     let mut near_contract_spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
         .version(Version::Two)
-        .lock_time(LockTime::from_height(1).unwrap())
+        .lock_time(LockTime::from_height(0).unwrap())
         .inputs(vec![near_contract_spending_txin])
         .outputs(vec![
             near_contract_spending_txout,
@@ -134,16 +149,24 @@ async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
         ])
         .build();
 
-    let script_pubkey_bob = BitcoinScriptBuf::new_p2wpkh(&near_p2wpkh)
+    let script_pubkey_near_contract = BitcoinScriptBuf::new_p2wpkh(&near_p2wpkh)
         .p2wpkh_script_code()
         .unwrap();
+
+    println!(
+        "DEBUG ITEM SCRIPT PUBKEY NEAR CONTRACT {:?}",
+        script_pubkey_near_contract
+    );
+
+    let near_script_code = ScriptBuf(script_pubkey_near_contract.into_bytes());
+    println!("Script code: {:?}", near_script_code);
 
     // Call the NEAR contract to generate the sighash
     let method_name = "generate_sighash_p2wpkh";
     let args = json!({
         "bitcoin_tx": near_contract_spending_tx,
         "input_index": 0,
-        "script_code": ScriptBuf(script_pubkey_bob.into_bytes()),
+        "script_code":near_script_code,
         "value": OMNI_SPEND_AMOUNT.to_sat()
     });
 
@@ -168,9 +191,24 @@ async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
                 .map(|s| s.trim().parse::<u8>().unwrap()) // Convertir cada parte a u8
                 .collect();
 
+            println!("Result bytes: {:?}", result_bytes);
+
+            let sighash_encoded_local = near_contract_spending_tx.build_for_signing_segwit(
+                omni_transaction::bitcoin::types::EcdsaSighashType::All,
+                0,
+                &near_script_code,
+                OMNI_SPEND_AMOUNT.to_sat(),
+            );
+
+            println!("Sighash encoded local: {:?}", sighash_encoded_local);
+
             // Calculate the sighash
             let sighash_omni = sha256d::Hash::hash(&result_bytes);
             let msg_omni = Message::from_digest_slice(sighash_omni.as_byte_array()).unwrap();
+
+            println!("Sighash generated");
+
+            assert_eq!(result_bytes, sighash_encoded_local);
 
             // Get the deposit amount for the mpc signer
             let mpc_contract_account_id: &str = "v1.signer-prod.testnet";
@@ -236,14 +274,55 @@ async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
             let signed_transaction = near_tx.sign(signer);
 
             // Send the transaction
-            let request = methods::send_tx::RpcSendTransactionRequest {
-                signed_transaction,
-                wait_until: TxExecutionStatus::Final,
-            };
+            let request: methods::send_tx::RpcSendTransactionRequest =
+                methods::send_tx::RpcSendTransactionRequest {
+                    signed_transaction,
+                    wait_until: TxExecutionStatus::Final,
+                };
 
             let signer_response = send_transaction(&near_json_rpc_client, request).await?;
             let (big_r, s) = extract_big_r_and_s(&signer_response).unwrap();
             let signature_built = create_signature(&big_r, &s);
+
+            println!("Signature built: {:?}", signature_built);
+
+            // Verify signature
+            let secp = Secp256k1::new();
+
+            let public_key_as_bytes = get_public_key_as_bytes(&derived_address);
+            println!("Public key as bytes: {:?}", public_key_as_bytes);
+
+            let secp_pubkey = bitcoin::secp256k1::PublicKey::from_slice(&public_key_as_bytes)
+                .expect("Invalid public key");
+
+            println!("Secp pubkey: {:?}", secp_pubkey);
+
+            let bitcoin_pubkey = bitcoin::PublicKey::new(secp_pubkey);
+
+            println!("Bitcoin pubkey: {:?}", bitcoin_pubkey);
+
+            let bitcoin_secp256k1_public_key =
+                BitcoinSecp256k1PublicKey::from_slice(&public_key_as_bytes).unwrap();
+
+            println!("Bitcoin public key: {:?}", bitcoin_secp256k1_public_key);
+
+            let wpkh = bitcoin_pubkey.wpubkey_hash().unwrap();
+
+            println!("Wpkh: {:?}", wpkh);
+
+            // Verify signature
+            let is_valid = secp
+                .verify_ecdsa(
+                    &msg_omni,
+                    &signature_built.unwrap(),
+                    &bitcoin_secp256k1_public_key,
+                )
+                .is_ok();
+
+            assert!(is_valid, "The signature should be valid");
+
+            println!("Signature verified");
+            // ----
 
             // Encode the signature
             let signature = bitcoin::ecdsa::Signature {
@@ -251,18 +330,39 @@ async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
                 sighash_type: bitcoin::EcdsaSighashType::All,
             };
 
+            println!("Signature: {:?}", signature);
+            println!("Signature bytes: {:?}", signature.serialize());
+
+            let witness_script = bitcoin::ScriptBuf::new_p2wpkh(&wpkh);
+            println!("Witness script: {:?}", witness_script);
+            println!("Witness script bytes: {:?}", witness_script.as_bytes());
+
             // Create the witness
-            let public_key_as_bytes = get_public_key_as_bytes(&derived_address);
+            let witness = BitcoinWitness::p2wpkh(&signature, &secp_pubkey);
 
-            let bitcoin_secp256k1_public_key =
-                BitcoinSecp256k1PublicKey::from_slice(&public_key_as_bytes).unwrap();
+            println!("Witness: {:?}", witness);
+            println!("Witness bytes: {:?}", witness);
 
-            let witness = BitcoinWitness::p2wpkh(&signature, &bitcoin_secp256k1_public_key);
+            println!(
+                "Witness antes de firmar: {:?}",
+                near_contract_spending_tx.input[0].witness
+            );
 
             let encoded_omni_tx = near_contract_spending_tx.build_with_witness(
                 0,
                 witness.to_vec(),
                 TransactionType::P2WPKH,
+            );
+
+            println!(
+                "Witness después de firmar: {:?}",
+                near_contract_spending_tx.input[0].witness
+            );
+
+            println!("Encoded Omni TX: {:?}", encoded_omni_tx.clone());
+            println!(
+                "hex encoded omni tx {:?}",
+                hex::encode(encoded_omni_tx.clone())
             );
 
             // Convert the transaction to a hexadecimal string
@@ -283,51 +383,4 @@ async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
     }
 
     Ok(())
-}
-
-fn extract_big_r_and_s(response: &RpcTransactionResponse) -> Result<(String, String), String> {
-    if let Some(near_primitives::views::FinalExecutionOutcomeViewEnum::FinalExecutionOutcome(
-        final_outcome,
-    )) = &response.final_execution_outcome
-    {
-        if let FinalExecutionStatus::SuccessValue(success_value) = &final_outcome.status {
-            let success_value_str =
-                String::from_utf8(success_value.clone()).map_err(|e| e.to_string())?;
-            let inner: serde_json::Value =
-                serde_json::from_str(&success_value_str).map_err(|e| e.to_string())?;
-
-            let big_r = inner["big_r"]["affine_point"]
-                .as_str()
-                .ok_or("Missing big_r affine_point")?;
-            let s = inner["s"]["scalar"].as_str().ok_or("Missing s scalar")?;
-
-            return Ok((big_r.to_string(), s.to_string()));
-        }
-    }
-
-    Err("Failed to extract big_r and s".to_string())
-}
-
-fn create_signature(big_r_hex: &str, s_hex: &str) -> Result<Signature, secp256k1::Error> {
-    // Convert hex strings to byte arrays
-    let big_r_bytes = hex::decode(big_r_hex).unwrap();
-    let s_bytes = hex::decode(s_hex).unwrap();
-
-    // Remove the first byte from big_r (compressed point indicator)
-    let big_r_x_bytes = &big_r_bytes[1..];
-
-    // Ensure the byte arrays are the correct length
-    if big_r_x_bytes.len() != 32 || s_bytes.len() != 32 {
-        return Err(secp256k1::Error::InvalidSignature);
-    }
-
-    // Create the signature from the bytes
-    let mut signature_bytes = [0u8; 64];
-    signature_bytes[..32].copy_from_slice(big_r_x_bytes);
-    signature_bytes[32..].copy_from_slice(&s_bytes);
-
-    // Create the signature object
-    let signature = Signature::from_compact(&signature_bytes)?;
-
-    Ok(signature)
 }
