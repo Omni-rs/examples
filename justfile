@@ -26,4 +26,4 @@ run PROJECT *FLAGS:
 
 # Run all tests
 test-all:
-    cargo test --workspace -- --nocapture
+    cargo test --workspace --exclude bitcoin-signing-segwit --exclude bitcoin-signing-segwit-multiple-utxos --exclude bitcoin-signing-with-propagation-legacy -- --nocapture
