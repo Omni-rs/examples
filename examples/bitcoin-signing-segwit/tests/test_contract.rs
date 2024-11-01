@@ -23,7 +23,7 @@ use omni_transaction::types::BITCOIN;
 // Omni Testing Utilities
 use omni_testing_utilities::bitcoind::AddressType;
 use omni_testing_utilities::{
-    address::{get_derived_address_for_segwit, get_public_key_hash_2},
+    address::{get_derived_address_for_segwit, get_public_key_hash},
     bitcoin::{get_bitcoin_instance, BTCTestContext},
     environment::get_user_account_info_from_file,
     near::{
@@ -71,7 +71,7 @@ async fn test_sighash_p2wpkh_btc_signing_remote_with_propagation(
 
     // Get the derived address of the NEAR contract
     let derived_address = get_derived_address_for_segwit(&user_account.account_id, PATH);
-    let public_key_hash = get_public_key_hash_2(&derived_address);
+    let public_key_hash = get_public_key_hash(&derived_address);
 
     btc_test_context.generate_to_derived_address(&derived_address)?;
 
