@@ -124,7 +124,7 @@ async fn test_sighash_p2wpkh_btc_multiple_signing_remote() -> Result<(), Box<dyn
     // The change output is locked to a key controlled by us.
     let change_txout = TxOut {
         value: change_amount,
-        script_pubkey: ScriptBuf(BitcoinScriptBuf::new_p2wpkh(&near_p2wpkh).into_bytes()), // TODO: Change
+        script_pubkey: ScriptBuf(BitcoinScriptBuf::new_p2wpkh(&near_p2wpkh).into_bytes()),
     };
 
     // The spend output is locked to a key controlled by the receiver. In this case to Alice.
@@ -140,45 +140,35 @@ async fn test_sighash_p2wpkh_btc_multiple_signing_remote() -> Result<(), Box<dyn
         .outputs(vec![spend_txout, change_txout])
         .build();
 
-    let requests: Vec<methods::query::RpcQueryRequest> = unspent_utxos
-        .iter()
-        .enumerate()
-        .map(|(i, unspent)| {
-            let _utxo_amount =
-                Amount::from_sat((unspent["amount"].as_f64().unwrap() * 100_000_000.0) as u64);
+    let futures = unspent_utxos.iter().enumerate().map(|(i, unspent)| {
+        let _utxo_amount =
+            Amount::from_sat((unspent["amount"].as_f64().unwrap() * 100_000_000.0) as u64);
 
-            // TODO: Change bob por NEAR
-            let script_pub_key = BitcoinScriptBuf::new_p2wpkh(&bob.wpkh);
-            let script_pubkey_bob = script_pub_key.p2wpkh_script_code().unwrap();
-            let script_code = ScriptBuf(script_pubkey_bob.into_bytes());
+        let script_pub_key = BitcoinScriptBuf::new_p2wpkh(&near_p2wpkh);
+        let script_pubkey_near = script_pub_key.p2wpkh_script_code().unwrap();
+        let script_code = ScriptBuf(script_pubkey_near.into_bytes());
 
-            // Call the NEAR contract to generate the sighash
-            let method_name = "generate_sighash_p2wpkh";
+        // Call the NEAR contract to generate the sighash
+        let method_name = "generate_sighash_p2wpkh";
 
-            let args = json!({
-                "bitcoin_tx": near_contract_spending_tx,
-                "input_index": i,
-                "script_code":script_code,
-                "value": OMNI_SPEND_AMOUNT.to_sat()
-            });
+        let args = json!({
+            "bitcoin_tx": near_contract_spending_tx,
+            "input_index": i,
+            "script_code":script_code,
+            "value": OMNI_SPEND_AMOUNT.to_sat()
+        });
 
-            methods::query::RpcQueryRequest {
-                block_reference: BlockReference::Finality(Finality::Final),
-                request: QueryRequest::CallFunction {
-                    account_id: user_account.account_id.clone(),
-                    method_name: method_name.to_string(),
-                    args: FunctionArgs::from(args.to_string().into_bytes()),
-                },
-            }
-        })
-        .collect();
+        methods::query::RpcQueryRequest {
+            block_reference: BlockReference::Finality(Finality::Final),
+            request: QueryRequest::CallFunction {
+                account_id: user_account.account_id.clone(),
+                method_name: method_name.to_string(),
+                args: FunctionArgs::from(args.to_string().into_bytes()),
+            },
+        }
+    });
 
-    let futures = requests
-        .into_iter()
-        .map(|request| near_json_rpc_client.call(request));
-
-    let responses = join_all(futures).await;
-
+    let responses = join_all(futures.map(|request| near_json_rpc_client.call(request))).await;
     let mut actions = Vec::new();
     let mut sighhashes_messages = Vec::new();
 
@@ -285,17 +275,13 @@ async fn test_sighash_p2wpkh_btc_multiple_signing_remote() -> Result<(), Box<dyn
     let signer_response: methods::tx::RpcTransactionResponse =
         send_transaction(&near_json_rpc_client, request).await?;
 
-    println!("Signer response: {:?}", signer_response);
-
     let signatures = extract_multiple_signatures(&signer_response).unwrap();
-
-    println!("Signatures: {:?}", signatures);
 
     for (index, (big_r, s)) in signatures.iter().enumerate() {
         println!("Verifying signature {}", index);
 
         // Build the signature
-        let signature_built = create_signature(&big_r, &s);
+        let signature_built = create_signature(big_r, s);
 
         // Verify signature
         let secp = Secp256k1::new();
