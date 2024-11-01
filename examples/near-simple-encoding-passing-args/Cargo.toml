@@ -20,7 +20,7 @@ near-sdk.workspace = true
 omni-transaction.workspace = true
 
 [dev-dependencies]
-near-sdk = { version = "5.1.0", features = ["unit-testing"] }
+near-sdk = { version = "5.5.0", features = ["unit-testing"] }
 bs58 = "0.5.1"
 near-workspaces.workspace = true
 tokio.workspace = true

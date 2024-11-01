@@ -93,14 +93,13 @@ impl Contract {
         // Prepare the transaction for signing
         let sighash_type = EcdsaSighashType::All;
         let input_index = 0;
-        let encoded_data = bitcoin_tx.build_for_signing_segwit(
+
+        bitcoin_tx.build_for_signing_segwit(
             sighash_type,
             input_index,
             &receiver_script_pubkey,
             Amount::from_sat(500_000_000).to_sat(),
-        );
-
-        encoded_data
+        )
     }
 }
 
