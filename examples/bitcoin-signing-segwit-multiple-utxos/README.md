@@ -1,12 +1,15 @@
 # Bitcoin Signing Multiple UTXOs (Segwit)
 
-This example demonstrates how to sign a Bitcoin transaction (segwit) using the MPC  (Multi-Party Computation) signer from a contract and propagate the transaction to the Bitcoin network (RegTest mode).
+This example demonstrates how to sign a Bitcoin transaction (segwit) with multiple UTXOs using the MPC  (Multi-Party Computation) signer from a contract.
 
 ## Overview
 
 1. **Setup Bitcoin Network**: We use `bitcoind` to simulate a Bitcoin network.
-2. **Create Users**: We create two users (Bob and Alice) with their respective private keys.
-3. **Generate Blocks**: We generate blocks to the users' addresses to simulate real transactions.
+2. **Create Users**: We create 1 user (Bob) with their respective private keys.
+3. **Derive Bitcoin address**: We derive the Bitcoin address from the NEAR contract account id.
+4. **Generate UTXOs**: We generate blocks to the derived address to simulate real transactions and to "give" UTXOs to the derived Bitcoin address that is 
+controlled by the NEAR contract.
+5. **Transfer BTC**: We transfer BTC to Bob, but since the derived Bitcoin address is controlled by the MPC Signer and the NEAR account, we need to sign the transaction that will allow us to transfer BTC to Bob.
 
 ## How to run the example
 
