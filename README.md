@@ -64,4 +64,5 @@ The recommendation is to go thought each example and read the annotated integrat
 - [x] [Simple signing (segwit)](./examples/bitcoin-signing-segwit/)
 - [x] [Bitcoin signing with propagation (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
 - [ ] [Bitcoin signing with propagation (segwit)](#)
-- [ ] [Bitcoin multiple signing with propagation (segwit)](./examples/bitcoin-multiple-signing-with-propagation-segwit)
+- [x] [Bitcoin signing (segwit) multiple UTXOs](./examples/bitcoin-signing-segwit-multiple-utxos/)
+- [ ] [Bitcoin signing (segwit) multiple UTXOs with propagation](#)
