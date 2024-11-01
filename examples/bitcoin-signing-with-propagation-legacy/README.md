@@ -1,12 +1,15 @@
 # Bitcoin Signing with Propagation (Legacy)
 
-This example demonstrates how to sign a Bitcoin transaction (legacy) using the MPC  (Multi-Party Computation) signer from a contract and propagate the transaction to the Bitcoin network (RegTest mode).
+This example demonstrates how to sign a Bitcoin transaction (legacy) using the MPC  (Multi-Party Computation) signer from a NEAR contract and propagate the transaction to the Bitcoin network (RegTest mode).
 
 ## Overview
 
 1. **Setup Bitcoin Network**: We use `bitcoind` to simulate a Bitcoin network.
-2. **Create Users**: We create two users (Bob and Alice) with their respective private keys.
-3. **Generate Blocks**: We generate blocks to the users' addresses to simulate real transactions.
+2. **Create Users**: We create 1 user (Bob) with their respective private key.
+3. **Derive Bitcoin address**: We derive the Bitcoin address from the NEAR contract account.
+4. **Generate UTXOs**: We "give" UTXOs to the derived Bitcoin address that is controlled by the NEAR contract by generating blocks to the derived address. 
+5. **Transfer BTC**: We transfer BTC from the derived Bitcoin address to Bob, but since the derived Bitcoin address is controlled by the MPC Signer and the NEAR contract account, we need to sign the transaction using the MPC signer that will allow us to transfer BTC to Bob.
+6. **Transaction Propagation**: Using the transaction payload signed, we submit this to the Bitcoin core node running in RegTest mode.
 
 ## How to run the example
 
