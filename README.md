@@ -48,6 +48,7 @@ The recommendation is to go thought each example and read the annotated integrat
 - [x] [Simple encoding passing args](./examples/evm-simple-encoding-passing-args)
 - [x] [Simple encoding with signature](./examples/evm-simple-encoding-with-signature)
 - [ ] [Simple signing](#)
+- [ ] [Signing with propagation](#)
 
 ### NEAR
 
@@ -55,6 +56,7 @@ The recommendation is to go thought each example and read the annotated integrat
 - [x] [Simple encoding passing args](./examples/near-simple-encoding-passing-args)
 - [ ] [Simple encoding with signature](#)
 - [ ] [Simple signing](#)
+- [ ] [Signing with propagation](#)
 
 ### Bitcoin
 
@@ -62,7 +64,9 @@ The recommendation is to go thought each example and read the annotated integrat
 - [ ] [Simple encoding passing args](./examples/bitcoin-simple-encoding-passing-args)
 - [ ] [Simple signing (legacy)](#)
 - [x] [Simple signing (segwit)](./examples/bitcoin-signing-segwit/)
-- [x] [Bitcoin signing with propagation (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
-- [ ] [Bitcoin signing with propagation (segwit)](#)
-- [x] [Bitcoin signing (segwit) multiple UTXOs](./examples/bitcoin-signing-segwit-multiple-utxos/)
-- [ ] [Bitcoin signing (segwit) multiple UTXOs with propagation](#)
+- [x] [Signing with propagation (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
+- [ ] [Signing with propagation (segwit)](#)
+- [x] [Signing (segwit) multiple UTXOs](./examples/bitcoin-signing-segwit-multiple-utxos/)
+- [ ] [Signing (segwit) multiple UTXOs with propagation](#)
+- [ ] [Runes Etching](#)
+- [ ] [Ordinals inscriptions](#)
