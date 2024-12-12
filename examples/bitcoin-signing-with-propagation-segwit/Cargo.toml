@@ -1,5 +1,5 @@
 [package]
-name = "bitcoin-signing-with-propagation-legacy"
+name = "bitcoin-signing-with-propagation-segwit"
 publish.workspace = true
 version.workspace = true
 edition.workspace = true
@@ -44,6 +44,6 @@ k256 = { version = "0.13.1", features = [
 bs58 = "0.5.1"
 ripemd = "0.1.3"
 omni-testing-utilities.workspace = true
-omni-box.workspace = true
+near-workspaces.workspace = true
 tokio.workspace = true
 serde_json.workspace = true

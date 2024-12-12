@@ -14,7 +14,7 @@ publish = false
 
 [workspace.dependencies]
 near-sdk = "5.5.0"
-omni-transaction = { git = "https://github.com/EdsonAlcala/omni-transaction-rs", branch = "master" }
+omni-transaction = { version = "0.1.1" }
 near-workspaces = { version = "0.14.0", features = [
     "experimental",
     "unstable",
@@ -23,6 +23,8 @@ tokio = { version = "1.12.0", features = ["full"] }
 serde_json = "1"
 hex = "0.4.3"
 omni-testing-utilities = { git = "https://github.com/omni-rs/omni-testing-utilities", branch = "main" }
+omni-box = { version = "0.1.2" }
+# omni-box = { path = "../omni-box" }
 
 [profile.release]
 codegen-units = 1
