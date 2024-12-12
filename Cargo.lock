@@ -2098,6 +2098,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "evm-signing-with-propagation"
+version = "0.0.1"
+dependencies = [
+ "hex",
+ "near-primitives 0.25.0",
+ "near-sdk",
+ "near-workspaces 0.14.1",
+ "omni-box",
+ "omni-transaction",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "evm-simple-encoding"
 version = "0.0.1"
 dependencies = [
@@ -4065,7 +4079,7 @@ dependencies = [
 
 [[package]]
 name = "omni-box"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "alloy",
  "bitcoin",
