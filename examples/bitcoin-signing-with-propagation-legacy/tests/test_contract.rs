@@ -1,13 +1,8 @@
 // Rust Bitcoin Dependencies
 use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::secp256k1::Message;
-// NEAR Dependencies
-use near_jsonrpc_client::methods;
-use near_jsonrpc_primitives::types::query::QueryResponseKind;
-use near_primitives::action::{Action, FunctionCallAction};
-use near_primitives::transaction::{Transaction, TransactionV0};
-use near_primitives::types::{BlockReference, Finality, FunctionArgs};
-use near_primitives::views::{QueryRequest, TxExecutionStatus};
+// Near dependencies
+use near_primitives::action::FunctionCallAction;
 // Omni Transaction Dependencies
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
@@ -16,7 +11,7 @@ use omni_transaction::bitcoin::types::{
 use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
 use omni_transaction::types::BITCOIN;
 // OmniBox Dependencies
-use omni_box::utils::address;
+use omni_box::utils::{address, signature};
 use omni_box::OmniBox;
 // Other Dependencies
 use serde_json::json;
@@ -107,81 +102,51 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     });
 
     println!("args: {:?}", args);
-    // TODO: Refactor
-    // Create the action
-    // let signing_action = Action::FunctionCall(Box::new(FunctionCallAction {
-    //     method_name: "sign_sighash_p2pkh".to_string(),
-    //     args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
-    //     gas: 100_000_000_000_000,
-    //     deposit: 1000000000000000000000000,
-    // }));
 
-    // let result = get_nonce_and_block_hash(
-    //     &near_json_rpc_client,
-    //     deployer_account.account_id.clone(),
-    //     signer.public_key(),
-    // )
-    // .await;
+    let signer_response = omni_box
+        .friendly_near_json_rpc_client
+        .send_action(FunctionCallAction {
+            method_name: "sign_sighash_p2pkh".to_string(),
+            args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
+            gas: 100_000_000_000_000,
+            deposit: 1000000000000000000000000,
+        })
+        .await?;
 
-    // let (nonce, block_hash) = result.unwrap();
+    let (big_r, s) = signature::extract_big_r_and_s(&signer_response).unwrap();
+    let signature_built = signature::create_signature(&big_r, &s);
 
-    // let nonce = nonce + 1;
+    // Encode the signature
+    let signature = bitcoin::ecdsa::Signature {
+        signature: signature_built.unwrap(),
+        sighash_type: bitcoin::EcdsaSighashType::All,
+    };
 
-    // // Create the transaction
-    // let near_tx: Transaction = Transaction::V0(TransactionV0 {
-    //     signer_id: deployer_account.account_id.clone(),
-    //     public_key: signer.public_key(),
-    //     nonce,
-    //     receiver_id: deployer_account.account_id.clone(),
-    //     block_hash,
-    //     actions: vec![signing_action],
-    // });
+    // Build the script sig
+    let script_sig_new = address::build_script_sig_as_bytes(derived_address, signature);
 
-    // // Sign the transaction
-    // let signer = &signer.into();
-    // let signed_transaction = near_tx.sign(signer);
+    // Assign script_sig to txin
+    let omni_script_sig = ScriptBuf(script_sig_new);
 
-    // // Send the transaction
-    // let request = methods::send_tx::RpcSendTransactionRequest {
-    //     signed_transaction,
-    //     wait_until: TxExecutionStatus::Final,
-    // };
+    // Encode the transaction with the script sig
+    let encoded_omni_tx =
+        near_contract_spending_tx.build_with_script_sig(0, omni_script_sig, TransactionType::P2PKH);
 
-    // let signer_response = send_transaction(&near_json_rpc_client, request).await?;
-    // let (big_r, s) = extract_big_r_and_s(&signer_response).unwrap();
-    // let signature_built = create_signature(&big_r, &s);
+    // Convert the transaction to a hexadecimal string
+    let hex_omni_tx = hex::encode(encoded_omni_tx);
+    let maxfeerate = 0.10;
+    let maxburnamount = 10.00;
 
-    // // Encode the signature
-    // let signature = bitcoin::ecdsa::Signature {
-    //     signature: signature_built.unwrap(),
-    //     sighash_type: bitcoin::EcdsaSighashType::All,
-    // };
+    // We now deploy to the bitcoin network (regtest mode)
+    let raw_tx_result: serde_json::Value = btc_context
+        .client()
+        .call(
+            "sendrawtransaction",
+            &[json!(hex_omni_tx), json!(maxfeerate), json!(maxburnamount)],
+        )
+        .unwrap();
 
-    // // Build the script sig
-    // let script_sig_new =
-    //     omni_testing_utilities::address::build_script_sig_as_bytes(derived_address, signature);
-
-    // // Assign script_sig to txin
-    // let omni_script_sig = ScriptBuf(script_sig_new);
-
-    // // Encode the transaction with the script sig
-    // let encoded_omni_tx =
-    //     near_contract_spending_tx.build_with_script_sig(0, omni_script_sig, TransactionType::P2PKH);
-
-    // // Convert the transaction to a hexadecimal string
-    // let hex_omni_tx = hex::encode(encoded_omni_tx);
-    // let maxfeerate = 0.10;
-    // let maxburnamount = 10.00;
-
-    // // We now deploy to the bitcoin network (regtest mode)
-    // let raw_tx_result: serde_json::Value = btc_client
-    //     .call(
-    //         "sendrawtransaction",
-    //         &[json!(hex_omni_tx), json!(maxfeerate), json!(maxburnamount)],
-    //     )
-    //     .unwrap();
-
-    // println!("raw_tx_result: {:?}", raw_tx_result);
+    println!("raw_tx_result: {:?}", raw_tx_result);
 
     Ok(())
 }
