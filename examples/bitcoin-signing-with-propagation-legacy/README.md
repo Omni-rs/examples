@@ -13,7 +13,7 @@ This example demonstrates how to sign a Bitcoin transaction (legacy) using the M
 
 ## How to run the example
 
-Since this example deploys the NEAR contract to the NEAR testnet, you need to have the NEAR CLI and a `config.json` file with the following structure:
+Since this example deploys the NEAR contract to the NEAR testnet, you need to have the NEAR CLI and a `deplpyer.json` file with the following structure:
 
 ```json
 {
@@ -23,13 +23,7 @@ Since this example deploys the NEAR contract to the NEAR testnet, you need to ha
 }
 ```
 
-Then run the following command to deploy the contract:
-
-```bash
-just run bitcoin-signing-with-propagation-legacy --deploy
-```
-
-If you want to run the test without deploying the contract, run the following command:
+Then, to run the test, simply run the following command:
 
 ```bash
 just run bitcoin-signing-with-propagation-legacy
