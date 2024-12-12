@@ -58,7 +58,7 @@ async fn test_simple_encoding_with_args() -> Result<(), Box<dyn std::error::Erro
     // Call the contract
     let transaction_payload = &omni_box
         .friendly_near_json_rpc_client
-        .call_contract::<Vec<u8>>(&method_name, args)
+        .call_contract::<Vec<u8>>(method_name, args)
         .await?;
 
     let attached_deposit = omni_box.get_experimental_signature_deposit().await?;
