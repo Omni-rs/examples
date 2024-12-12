@@ -28,7 +28,8 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     let bob = &btc_context.bob_legacy;
 
     // Get the derived address of the NEAR contract / deployer account
-    let derived_address = address::get_derived_address(&omni_box.deployer_account.account_id, PATH);
+    let derived_address =
+        address::get_derived_address_for_btc_legacy(&omni_box.deployer_account.account_id, PATH);
     let near_contract_script_pubkey = address::get_script_pub_key(&derived_address);
 
     // Give some BTC (UTXOs) to the NEAR contract
@@ -103,8 +104,6 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
         "sighash_p2pkh": hex::encode(msg_omni.as_ref()),
         "attached_deposit": attached_deposit.to_string()
     });
-
-    println!("args: {:?}", args);
 
     let signer_response = omni_box
         .friendly_near_json_rpc_client
