@@ -41,6 +41,9 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
     let first_unspent_near_contract = unspent_near_contracts.first().unwrap();
 
+    // Give UTXOs again to avoid confirmations issues
+    btc_context.generate_to_derived_address(&derived_address)?;
+
     // Create the transaction input
     let near_contract_spending_txin: TxIn = TxIn {
         previous_output: OutPoint::new(
