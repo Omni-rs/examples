@@ -19,6 +19,7 @@ workspace = true
 near-sdk.workspace = true
 omni-transaction.workspace = true
 hex.workspace = true
+schemars = { version = "0.8" }
 
 [dev-dependencies]
 bitcoin = { version = "0.32.0", default-features = false, features = [

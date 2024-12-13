@@ -1122,6 +1122,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-signing-with-propagation-legacy-advanced"
+version = "0.0.1"
+dependencies = [
+ "bitcoin",
+ "bs58 0.5.1",
+ "hex",
+ "k256",
+ "near-crypto 0.25.0",
+ "near-jsonrpc-client 0.12.0 (git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1)",
+ "near-jsonrpc-primitives 0.25.0",
+ "near-primitives 0.25.0",
+ "near-sdk",
+ "omni-box",
+ "omni-testing-utilities",
+ "omni-transaction",
+ "ripemd",
+ "schemars",
+ "serde_json",
+ "sha3",
+ "tokio",
+]
+
+[[package]]
 name = "bitcoin-signing-with-propagation-segwit"
 version = "0.0.1"
 dependencies = [
@@ -4406,8 +4429,6 @@ dependencies = [
 [[package]]
 name = "omni-box"
 version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00b30bcc39fdb89fbf01a703ecc33fea60faab3115a84dd200364a246e0b0eaf"
 dependencies = [
  "alloy",
  "bitcoin",

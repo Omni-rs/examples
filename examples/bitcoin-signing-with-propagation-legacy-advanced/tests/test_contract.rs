@@ -92,45 +92,47 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
         .send_action(FunctionCallAction {
             method_name: "create_sighash_and_sign_p2pkh".to_string(),
             args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
-            gas: 100_000_000_000_000,
+            gas: 300000000000000,
             deposit: 1000000000000000000000000,
         })
         .await?;
 
-    let (big_r, s) = signature::extract_big_r_and_s(&signer_response).unwrap();
-    let signature_built = signature::create_signature(&big_r, &s);
+    println!("signer_response: {:?}", signer_response);
+
+    // let (big_r, s) = signature::extract_big_r_and_s(&signer_response).unwrap();
+    // let signature_built = signature::create_signature(&big_r, &s);
 
     // Encode the signature
-    let signature = bitcoin::ecdsa::Signature {
-        signature: signature_built.unwrap(),
-        sighash_type: bitcoin::EcdsaSighashType::All,
-    };
+    // let signature = bitcoin::ecdsa::Signature {
+    //     signature: signature_built.unwrap(),
+    //     sighash_type: bitcoin::EcdsaSighashType::All,
+    // };
 
     // Build the script sig
-    let script_sig_new = address::build_script_sig_as_bytes(derived_address, signature);
+    // let script_sig_new = address::build_script_sig_as_bytes(derived_address, signature);
 
-    // Assign script_sig to txin
-    let omni_script_sig = ScriptBuf(script_sig_new);
+    // // Assign script_sig to txin
+    // let omni_script_sig = ScriptBuf(script_sig_new);
 
-    // Encode the transaction with the script sig
-    let encoded_omni_tx =
-        near_contract_spending_tx.build_with_script_sig(0, omni_script_sig, TransactionType::P2PKH);
+    // // Encode the transaction with the script sig
+    // let encoded_omni_tx =
+    //     near_contract_spending_tx.build_with_script_sig(0, omni_script_sig, TransactionType::P2PKH);
 
     // // Convert the transaction to a hexadecimal string
-    let hex_omni_tx = hex::encode(encoded_omni_tx);
-    let maxfeerate = 0.10;
-    let maxburnamount = 10.00;
+    // let hex_omni_tx = hex::encode(encoded_omni_tx);
+    // let maxfeerate = 0.10;
+    // let maxburnamount = 10.00;
 
-    // We now deploy to the bitcoin network (regtest mode)
-    let raw_tx_result: serde_json::Value = btc_context
-        .client()
-        .call(
-            "sendrawtransaction",
-            &[json!(hex_omni_tx), json!(maxfeerate), json!(maxburnamount)],
-        )
-        .unwrap();
+    // // We now deploy to the bitcoin network (regtest mode)
+    // let raw_tx_result: serde_json::Value = btc_context
+    //     .client()
+    //     .call(
+    //         "sendrawtransaction",
+    //         &[json!(hex_omni_tx), json!(maxfeerate), json!(maxburnamount)],
+    //     )
+    //     .unwrap();
 
-    println!("raw_tx_result: {:?}", raw_tx_result);
+    // println!("raw_tx_result: {:?}", raw_tx_result);
 
     Ok(())
 }

@@ -1,30 +1,21 @@
-use near_sdk::env::sha256;
-use near_sdk::serde::Serialize;
-use near_sdk::{ext_contract, Promise};
-use near_sdk::{near, Gas, NearToken};
+use near_sdk::env::{self, sha256};
+use near_sdk::Promise;
+use near_sdk::{near, Gas, NearToken, PromiseError};
 
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::EcdsaSighashType;
+
+pub mod external;
+pub mod types;
+
+use external::{mpc_contract, this_contract};
+use types::{SignRequest, SignatureResponse};
 
 const MPC_CONTRACT_ACCOUNT_ID: &str = "v1.signer-prod.testnet";
 const GAS: Gas = Gas::from_tgas(50);
 const PATH: &str = "bitcoin-1";
 const KEY_VERSION: u32 = 0;
-
-#[derive(Debug, Serialize)]
-#[serde(crate = "near_sdk::serde")]
-pub struct SignRequest {
-    pub payload: [u8; 32],
-    pub path: String,
-    pub key_version: u32,
-}
-
-#[allow(dead_code)]
-#[ext_contract(mpc_contract)]
-trait MPCContract {
-    fn sign(&self, request: SignRequest);
-    fn experimental_signature_deposit(&self) -> NearToken;
-}
+const CALLBACK_GAS: Gas = Gas::from_tgas(200);
 
 #[near(contract_state)]
 #[derive(Default)]
@@ -52,9 +43,37 @@ impl Contract {
             key_version: KEY_VERSION,
         };
 
-        mpc_contract::ext(MPC_CONTRACT_ACCOUNT_ID.parse().unwrap())
+        let promise = mpc_contract::ext(MPC_CONTRACT_ACCOUNT_ID.parse().unwrap())
             .with_static_gas(GAS)
             .with_attached_deposit(attached_deposit)
-            .sign(request)
+            .sign(request);
+
+        promise.then(
+            this_contract::ext(env::current_account_id())
+                .with_static_gas(CALLBACK_GAS)
+                .callback(bitcoin_tx),
+        )
+    }
+
+    #[private]
+    pub fn callback(
+        &mut self,
+        #[callback_result] call_result: Result<SignatureResponse, PromiseError>,
+        bitcoin_tx: BitcoinTransaction,
+    ) -> String {
+        match call_result {
+            Ok(signature_response) => {
+                env::log_str(&format!(
+                    "Successfully received signature: big_r = {:?}, s = {:?}, recovery_id = {}",
+                    signature_response.big_r, signature_response.s, signature_response.recovery_id
+                ));
+                env::log_str(&format!("Bitcoin transaction: {:?}", bitcoin_tx));
+                format!("Signature received: {:?}", signature_response)
+            }
+            Err(error) => {
+                env::log_str(&format!("Callback failed with error: {:?}", error));
+                "Callback failed".to_string()
+            }
+        }
     }
 }
