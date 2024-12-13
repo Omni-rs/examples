@@ -4429,6 +4429,8 @@ dependencies = [
 [[package]]
 name = "omni-box"
 version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00b30bcc39fdb89fbf01a703ecc33fea60faab3115a84dd200364a246e0b0eaf"
 dependencies = [
  "alloy",
  "bitcoin",
