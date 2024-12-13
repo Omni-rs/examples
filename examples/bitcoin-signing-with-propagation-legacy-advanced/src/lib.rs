@@ -32,41 +32,19 @@ pub struct Contract {}
 
 #[near]
 impl Contract {
-    pub fn generate_sighash_p2pkh(&self, bitcoin_tx: BitcoinTransaction) -> Vec<u8> {
-        bitcoin_tx.build_for_signing_legacy(EcdsaSighashType::All)
-    }
-
-    pub fn generate_sighash_p2pkh_2(&self, bitcoin_tx: BitcoinTransaction) -> Vec<u8> {
-        let encoded_tx = bitcoin_tx.build_for_signing_legacy(EcdsaSighashType::All);
-
-        // Hash the sighash
-        sha256(&sha256(&encoded_tx))
-    }
-
-    pub fn generate_message(&self, bitcoin_tx: BitcoinTransaction) -> String {
-        let encoded_tx = bitcoin_tx.build_for_signing_legacy(EcdsaSighashType::All);
-
-        // Hash the sighash
-        let hashed_value = sha256(&sha256(&encoded_tx));
-
-        // Decode the hex string back to bytes
-        hex::encode(hashed_value)
-    }
-
     pub fn create_sighash_and_sign_p2pkh(
         &self,
         bitcoin_tx: BitcoinTransaction,
         attached_deposit: NearToken,
     ) -> Promise {
+        // Build the encoded transaction for sighash
         let encoded_tx = bitcoin_tx.build_for_signing_legacy(EcdsaSighashType::All);
 
-        // Hash the sighash
-        let hashed_value = sha256(&sha256(&encoded_tx));
+        // Hash the encoded transaction (sighash)
+        let sighash = sha256(&sha256(&encoded_tx));
 
         // Ensure the payload is exactly 32 bytes
-        let payload: [u8; 32] = hashed_value
-            .try_into()
-            .expect("Payload must be 32 bytes long");
+        let payload: [u8; 32] = sighash.try_into().expect("Payload must be 32 bytes long");
 
         let request: SignRequest = SignRequest {
             payload,
@@ -74,37 +52,6 @@ impl Contract {
             key_version: KEY_VERSION,
         };
 
-        mpc_contract::ext(MPC_CONTRACT_ACCOUNT_ID.parse().unwrap())
-            .with_static_gas(GAS)
-            .with_attached_deposit(attached_deposit)
-            .sign(request)
-    }
-
-    pub fn sign_sighash_p2pkh(
-        &self,
-        sighash_p2pkh: String,
-        attached_deposit: NearToken,
-    ) -> Promise {
-        // let encoded_tx: [u8] = bitcoin_tx.build_for_signing_legacy(EcdsaSighashType::All);
-
-        // // Hash the sighash
-        // let sighash_p2pkh = sha256(&sha256(&encoded_tx));
-
-        // Decode the hex string back to bytes
-        let payload_vec = hex::decode(sighash_p2pkh).expect("Invalid hex string");
-
-        // Ensure the payload is exactly 32 bytes
-        let payload: [u8; 32] = payload_vec
-            .try_into()
-            .expect("Payload must be 32 bytes long");
-
-        let request: SignRequest = SignRequest {
-            payload,
-            path: PATH.to_string(),
-            key_version: KEY_VERSION,
-        };
-
-        // TODO: Aprender como se hace lo del callback
         mpc_contract::ext(MPC_CONTRACT_ACCOUNT_ID.parse().unwrap())
             .with_static_gas(GAS)
             .with_attached_deposit(attached_deposit)
