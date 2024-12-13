@@ -3,12 +3,12 @@ use near_primitives::action::FunctionCallAction;
 // Omni Transaction Dependencies
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
-    Amount, LockTime, OutPoint, ScriptBuf, Sequence, TransactionType, TxIn, TxOut, Version, Witness,
+    Amount, LockTime, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Version, Witness,
 };
 use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
 use omni_transaction::types::BITCOIN;
 // OmniBox Dependencies
-use omni_box::utils::{address, signature};
+use omni_box::utils::address;
 use omni_box::OmniBox;
 // Other Dependencies
 use serde_json::json;
