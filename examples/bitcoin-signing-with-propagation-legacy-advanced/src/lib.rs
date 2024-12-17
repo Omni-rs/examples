@@ -87,9 +87,7 @@ impl Contract {
                 );
 
                 // Serialise the updated transaction
-                let raw_hex_tx = hex::encode(updated_tx);
-
-                raw_hex_tx
+                hex::encode(updated_tx)
             }
             Err(error) => {
                 env::log_str(&format!("Callback failed with error: {:?}", error));
