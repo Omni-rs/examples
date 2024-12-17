@@ -3,8 +3,8 @@ use near_sdk::Promise;
 use near_sdk::{near, Gas, NearToken, PromiseError};
 
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
-use omni_transaction::bitcoin::types::EcdsaSighashType;
-
+use omni_transaction::bitcoin::types::{EcdsaSighashType, ScriptBuf, TransactionType};
+use omni_transaction::bitcoin::utils::{build_script_sig, serialize_ecdsa_signature_from_str};
 pub mod external;
 pub mod types;
 
@@ -26,6 +26,7 @@ impl Contract {
     pub fn create_sighash_and_sign_p2pkh(
         &self,
         bitcoin_tx: BitcoinTransaction,
+        bitcoin_pubkey: Vec<u8>,
         attached_deposit: NearToken,
     ) -> Promise {
         // Build the encoded transaction for sighash
@@ -51,7 +52,7 @@ impl Contract {
         promise.then(
             this_contract::ext(env::current_account_id())
                 .with_static_gas(CALLBACK_GAS)
-                .callback(bitcoin_tx),
+                .callback(bitcoin_tx, bitcoin_pubkey),
         )
     }
 
@@ -60,6 +61,7 @@ impl Contract {
         &mut self,
         #[callback_result] call_result: Result<SignatureResponse, PromiseError>,
         bitcoin_tx: BitcoinTransaction,
+        bitcoin_pubkey: Vec<u8>,
     ) -> String {
         match call_result {
             Ok(signature_response) => {
@@ -67,8 +69,25 @@ impl Contract {
                     "Successfully received signature: big_r = {:?}, s = {:?}, recovery_id = {}",
                     signature_response.big_r, signature_response.s, signature_response.recovery_id
                 ));
-                env::log_str(&format!("Bitcoin transaction: {:?}", bitcoin_tx));
-                format!("Signature received: {:?}", signature_response)
+
+                let signature = serialize_ecdsa_signature_from_str(
+                    &signature_response.big_r.affine_point,
+                    &signature_response.s.scalar,
+                );
+
+                let script_sig = build_script_sig(&signature, bitcoin_pubkey.as_slice());
+
+                let mut bitcoin_tx = bitcoin_tx;
+
+                // Update the transaction with the script_sig
+                let updated_tx = bitcoin_tx.build_with_script_sig(
+                    0,
+                    ScriptBuf(script_sig),
+                    TransactionType::P2PKH,
+                );
+
+                // Serialise the updated transaction
+                hex::encode(updated_tx)
             }
             Err(error) => {
                 env::log_str(&format!("Callback failed with error: {:?}", error));

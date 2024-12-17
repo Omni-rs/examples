@@ -13,5 +13,5 @@ trait MPCContract {
 #[allow(dead_code)]
 #[ext_contract(this_contract)]
 trait ThisContract {
-    fn callback(&self, bitcoin_tx: BitcoinTransaction);
+    fn callback(&self, bitcoin_tx: BitcoinTransaction, bitcoin_pubkey: Vec<u8>);
 }
