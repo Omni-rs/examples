@@ -79,7 +79,6 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
         .build();
 
     let public_key_as_bytes = get_uncompressed_bitcoin_pubkey(&derived_address);
-    println!("public key bytes {:?}", public_key_as_bytes);
 
     // We add the script_pubkey of the NEAR contract as the script_sig
     near_contract_spending_tx.input[0].script_sig = ScriptBuf(near_contract_script_pubkey);

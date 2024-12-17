@@ -77,8 +77,6 @@ impl Contract {
 
                 let script_sig = build_script_sig(&signature, bitcoin_pubkey.as_slice());
 
-                env::log_str(&format!("ScriptSig: {:?}", script_sig));
-
                 let mut bitcoin_tx = bitcoin_tx;
 
                 // Update the transaction with the script_sig
@@ -87,18 +85,9 @@ impl Contract {
                     ScriptBuf(script_sig),
                     TransactionType::P2PKH,
                 );
-                env::log_str(&format!(
-                    "Bitcoin transaction after script_sig: {:?}",
-                    updated_tx
-                ));
 
                 // Serialise the updated transaction
                 let raw_hex_tx = hex::encode(updated_tx);
-
-                env::log_str(&format!(
-                    "Updated Bitcoin transaction as HEX: {}",
-                    raw_hex_tx
-                ));
 
                 raw_hex_tx
             }
