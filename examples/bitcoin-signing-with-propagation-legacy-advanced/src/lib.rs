@@ -4,9 +4,8 @@ use near_sdk::{near, Gas, NearToken, PromiseError};
 
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{EcdsaSighashType, ScriptBuf, TransactionType};
-
+use omni_transaction::bitcoin::utils::{build_script_sig, serialize_ecdsa_signature_from_str};
 pub mod external;
-pub mod signature;
 pub mod types;
 
 use external::{mpc_contract, this_contract};
@@ -71,27 +70,18 @@ impl Contract {
                     signature_response.big_r, signature_response.s, signature_response.recovery_id
                 ));
 
-                // 🔥 Extrae r y s desde los campos de SignatureResponse
-                let big_r_bytes = hex::decode(signature_response.big_r.affine_point)
-                    .expect("Error al decodificar Big R en formato hexadecimal");
-                let s_bytes = hex::decode(signature_response.s.scalar)
-                    .expect("Error al decodificar S en formato hexadecimal");
+                let signature = serialize_ecdsa_signature_from_str(
+                    &signature_response.big_r.affine_point,
+                    &signature_response.s.scalar,
+                );
 
-                // Construye la firma completa (64 bytes) combinando r (32) y s (32)
-                let mut signature_bytes = vec![];
-                signature_bytes.extend_from_slice(&big_r_bytes[1..]); // Remove first byte (indicator)
-                signature_bytes.extend_from_slice(&s_bytes);
+                let script_sig = build_script_sig(&signature, bitcoin_pubkey.as_slice());
 
-                // Function 1: encode_signature_as_der
-                // Function 2: build_script_sig
-
-                // 🚀 Construye el script sig
-                let script_sig = signature::build_script_sig(&signature_bytes, &bitcoin_pubkey);
                 env::log_str(&format!("ScriptSig: {:?}", script_sig));
 
                 let mut bitcoin_tx = bitcoin_tx;
 
-                // 🔧 Actualiza la transacción con el script_sig
+                // Update the transaction with the script_sig
                 let updated_tx = bitcoin_tx.build_with_script_sig(
                     0,
                     ScriptBuf(script_sig),
@@ -102,7 +92,7 @@ impl Contract {
                     updated_tx
                 ));
 
-                // 🚀 Serializar la transacción completa a hexadecimal
+                // Serialise the updated transaction
                 let raw_hex_tx = hex::encode(updated_tx);
 
                 env::log_str(&format!(
@@ -110,7 +100,6 @@ impl Contract {
                     raw_hex_tx
                 ));
 
-                // Devolver la transacción en formato hexadecimal
                 raw_hex_tx
             }
             Err(error) => {

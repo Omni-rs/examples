@@ -8,7 +8,7 @@ use omni_transaction::bitcoin::types::{
 use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
 use omni_transaction::types::BITCOIN;
 // OmniBox Dependencies
-use omni_box::utils::address::{self};
+use omni_box::utils::address::{self, get_uncompressed_bitcoin_pubkey};
 use omni_box::utils::signature;
 use omni_box::OmniBox;
 // Other Dependencies
@@ -78,7 +78,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
         ])
         .build();
 
-    let public_key_as_bytes = address::get_compressed_bitcoin_pubkey(&derived_address);
+    let public_key_as_bytes = get_uncompressed_bitcoin_pubkey(&derived_address);
     println!("public key bytes {:?}", public_key_as_bytes);
 
     // We add the script_pubkey of the NEAR contract as the script_sig
