@@ -117,5 +117,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
         )
         .unwrap();
 
+    println!("raw_tx_result: {:?}", raw_tx_result);
+
     Ok(())
 }
