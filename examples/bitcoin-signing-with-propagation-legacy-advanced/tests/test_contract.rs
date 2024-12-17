@@ -102,11 +102,8 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
         })
         .await?;
 
-    println!("signer_response: {:?}", signer_response);
-
     // Convert the transaction to a hexadecimal string
     let hex_omni_tx = signature::extract_signed_transaction(&signer_response).unwrap();
-    println!("hex_omni_tx: {:?}", hex_omni_tx);
 
     let maxfeerate = 0.10;
     let maxburnamount = 10.00;
@@ -119,8 +116,6 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
             &[json!(hex_omni_tx), json!(maxfeerate), json!(maxburnamount)],
         )
         .unwrap();
-
-    println!("raw_tx_result: {:?}", raw_tx_result);
 
     Ok(())
 }
