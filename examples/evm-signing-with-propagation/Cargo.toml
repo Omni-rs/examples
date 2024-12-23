@@ -27,3 +27,4 @@ tokio.workspace = true
 serde_json.workspace = true
 omni-box.workspace = true
 near-primitives = "0.25.0"
+alloy-primitives = { version = "0.8.3" }

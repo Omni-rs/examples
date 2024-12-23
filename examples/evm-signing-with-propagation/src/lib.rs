@@ -1,5 +1,17 @@
-use near_sdk::near;
+use near_sdk::{env, near, Gas, NearToken, Promise, PromiseError};
 use omni_transaction::evm::evm_transaction::EVMTransaction;
+use omni_transaction::evm::types::Signature;
+use omni_transaction::signer::types::{mpc_contract, SignRequest, SignatureResponse};
+
+pub mod external;
+
+use external::this_contract;
+
+const MPC_CONTRACT_ACCOUNT_ID: &str = "v1.signer-prod.testnet";
+const GAS: Gas = Gas::from_tgas(50);
+const PATH: &str = "ethereum-1";
+const KEY_VERSION: u32 = 0;
+const CALLBACK_GAS: Gas = Gas::from_tgas(200);
 
 #[near(contract_state)]
 #[derive(Default)]
@@ -10,6 +22,88 @@ impl Contract {
     pub fn get_transaction_encoded_data(&self, evm_tx_params: EVMTransaction) -> Vec<u8> {
         evm_tx_params.build_for_signing()
     }
+
+    pub fn get_transaction_hash(&self, evm_tx_params: EVMTransaction) -> Vec<u8> {
+        let encoded_data = self.get_transaction_encoded_data(evm_tx_params);
+        env::keccak256(&encoded_data)
+    }
+
+    // pub fn sign_transaction(&self, tx_hash: Vec<u8>, attached_deposit: NearToken) -> Promise {
+    //     // Ensure the payload is exactly 32 bytes
+    //     let payload: [u8; 32] = tx_hash
+    //         .clone()
+    //         .try_into()
+    //         .expect("Payload must be 32 bytes long");
+
+    //     let request: SignRequest = SignRequest {
+    //         payload,
+    //         path: PATH.to_string(),
+    //         key_version: KEY_VERSION,
+    //     };
+
+    //     let promise = mpc_contract::ext(MPC_CONTRACT_ACCOUNT_ID.parse().unwrap())
+    //         .with_static_gas(GAS)
+    //         .with_attached_deposit(attached_deposit)
+    //         .sign(request);
+
+    //     promise.then(
+    //         this_contract::ext(env::current_account_id())
+    //             .with_static_gas(CALLBACK_GAS)
+    //             .callback(tx_hash),
+    //     )
+    // }
+
+    // #[private]
+    // pub fn callback(
+    //     &mut self,
+    //     #[callback_result] call_result: Result<SignatureResponse, PromiseError>,
+    //     ethereum_tx: Vec<u8>,
+    //     // TODO: Pasar todo typado
+    //     // omni_evm_tx: EVMTransaction,
+    // ) -> String {
+    //     match call_result {
+    //         Ok(signature_response) => {
+    //             env::log_str(&format!(
+    //                 "Successfully received signature: big_r = {:?}, s = {:?}, recovery_id = {}",
+    //                 signature_response.big_r, signature_response.s, signature_response.recovery_id
+    //             ));
+
+    //             // TODO: Encodear la response bien
+    //             let signature_omni: Signature = Signature {
+    //                 v: signature.v().to_u64(),
+    //                 r: signature.r().to_be_bytes::<32>().to_vec(),
+    //                 s: signature.s().to_be_bytes::<32>().to_vec(),
+    //             };
+
+    //             let omni_evm_tx_encoded_with_signature =
+    //                 ethereum_tx.build_with_signature(&signature_omni);
+
+    //             // let signature = serialize_ecdsa_signature_from_str(
+    //             //     &signature_response.big_r.affine_point,
+    //             //     &signature_response.s.scalar,
+    //             // );
+
+    //             // let script_sig = build_script_sig(&signature, bitcoin_pubkey.as_slice());
+
+    //             // let mut bitcoin_tx = bitcoin_tx;
+
+    //             // // Update the transaction with the script_sig
+    //             // let updated_tx = bitcoin_tx.build_with_script_sig(
+    //             //     0,
+    //             //     ScriptBuf(script_sig),
+    //             //     TransactionType::P2PKH,
+    //             // );
+
+    //             // Serialise the updated transaction
+    //             // hex::encode(updated_tx)
+    //             "".to_string()
+    //         }
+    //         Err(error) => {
+    //             env::log_str(&format!("Callback failed with error: {:?}", error));
+    //             "Callback failed".to_string()
+    //         }
+    //     }
+    // }
 }
 
 #[cfg(test)]
