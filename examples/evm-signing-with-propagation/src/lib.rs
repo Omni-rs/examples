@@ -19,134 +19,107 @@ pub struct Contract {}
 
 #[near]
 impl Contract {
-    pub fn get_transaction_encoded_data(&self, evm_tx_params: EVMTransaction) -> Vec<u8> {
-        evm_tx_params.build_for_signing()
-    }
+    pub fn hash_and_sign_transaction(
+        &self,
+        evm_tx_params: EVMTransaction,
+        attached_deposit: NearToken,
+    ) -> Promise {
+        let encoded_data = evm_tx_params.build_for_signing();
 
-    pub fn get_transaction_hash(&self, evm_tx_params: EVMTransaction) -> Vec<u8> {
-        let encoded_data = self.get_transaction_encoded_data(evm_tx_params);
-        env::keccak256(&encoded_data)
-    }
+        let tx_hash = env::keccak256(&encoded_data);
 
-    // pub fn sign_transaction(&self, tx_hash: Vec<u8>, attached_deposit: NearToken) -> Promise {
-    //     // Ensure the payload is exactly 32 bytes
-    //     let payload: [u8; 32] = tx_hash
-    //         .clone()
-    //         .try_into()
-    //         .expect("Payload must be 32 bytes long");
+        // Ensure the payload is exactly 32 bytes
+        let payload: [u8; 32] = tx_hash
+            .clone()
+            .try_into()
+            .expect("Payload must be 32 bytes long");
 
-    //     let request: SignRequest = SignRequest {
-    //         payload,
-    //         path: PATH.to_string(),
-    //         key_version: KEY_VERSION,
-    //     };
-
-    //     let promise = mpc_contract::ext(MPC_CONTRACT_ACCOUNT_ID.parse().unwrap())
-    //         .with_static_gas(GAS)
-    //         .with_attached_deposit(attached_deposit)
-    //         .sign(request);
-
-    //     promise.then(
-    //         this_contract::ext(env::current_account_id())
-    //             .with_static_gas(CALLBACK_GAS)
-    //             .callback(tx_hash),
-    //     )
-    // }
-
-    // #[private]
-    // pub fn callback(
-    //     &mut self,
-    //     #[callback_result] call_result: Result<SignatureResponse, PromiseError>,
-    //     ethereum_tx: Vec<u8>,
-    //     // TODO: Pasar todo typado
-    //     // omni_evm_tx: EVMTransaction,
-    // ) -> String {
-    //     match call_result {
-    //         Ok(signature_response) => {
-    //             env::log_str(&format!(
-    //                 "Successfully received signature: big_r = {:?}, s = {:?}, recovery_id = {}",
-    //                 signature_response.big_r, signature_response.s, signature_response.recovery_id
-    //             ));
-
-    //             // TODO: Encodear la response bien
-    //             let signature_omni: Signature = Signature {
-    //                 v: signature.v().to_u64(),
-    //                 r: signature.r().to_be_bytes::<32>().to_vec(),
-    //                 s: signature.s().to_be_bytes::<32>().to_vec(),
-    //             };
-
-    //             let omni_evm_tx_encoded_with_signature =
-    //                 ethereum_tx.build_with_signature(&signature_omni);
-
-    //             // let signature = serialize_ecdsa_signature_from_str(
-    //             //     &signature_response.big_r.affine_point,
-    //             //     &signature_response.s.scalar,
-    //             // );
-
-    //             // let script_sig = build_script_sig(&signature, bitcoin_pubkey.as_slice());
-
-    //             // let mut bitcoin_tx = bitcoin_tx;
-
-    //             // // Update the transaction with the script_sig
-    //             // let updated_tx = bitcoin_tx.build_with_script_sig(
-    //             //     0,
-    //             //     ScriptBuf(script_sig),
-    //             //     TransactionType::P2PKH,
-    //             // );
-
-    //             // Serialise the updated transaction
-    //             // hex::encode(updated_tx)
-    //             "".to_string()
-    //         }
-    //         Err(error) => {
-    //             env::log_str(&format!("Callback failed with error: {:?}", error));
-    //             "Callback failed".to_string()
-    //         }
-    //     }
-    // }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use omni_transaction::evm::evm_transaction::EVMTransaction;
-    use omni_transaction::evm::utils::parse_eth_address;
-
-    #[test]
-    fn test_get_transaction_encoded_when_passing_tx() {
-        let contract = Contract::default();
-
-        let to_address_str = "d8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
-        let to_address = parse_eth_address(to_address_str);
-        let max_fee_per_gas: u128 = 20_000_000_000;
-        let max_priority_fee_per_gas: u128 = 1_000_000_000;
-        let gas_limit: u128 = 21_000;
-        let chain_id: u64 = 1;
-        let nonce: u64 = 0;
-        let input: Vec<u8> = vec![];
-        let value: u128 = 10000000000000000; // 0.01 ETH
-
-        let tx = EVMTransaction {
-            nonce,
-            to: Some(to_address),
-            value,
-            input,
-            max_priority_fee_per_gas,
-            max_fee_per_gas,
-            gas_limit,
-            chain_id,
-            access_list: vec![],
+        let request: SignRequest = SignRequest {
+            payload,
+            path: PATH.to_string(),
+            key_version: KEY_VERSION,
         };
 
-        let encoded_data = contract.get_transaction_encoded_data(tx);
+        let promise = mpc_contract::ext(MPC_CONTRACT_ACCOUNT_ID.parse().unwrap())
+            .with_static_gas(GAS)
+            .with_attached_deposit(attached_deposit)
+            .sign(request);
 
-        let expected_data = vec![
-            2, 239, 1, 128, 132, 59, 154, 202, 0, 133, 4, 168, 23, 200, 0, 130, 82, 8, 148, 216,
-            218, 107, 242, 105, 100, 175, 157, 126, 237, 158, 3, 229, 52, 21, 211, 122, 169, 96,
-            69, 135, 35, 134, 242, 111, 193, 0, 0, 128, 192,
-        ];
+        promise.then(
+            this_contract::ext(env::current_account_id())
+                .with_static_gas(CALLBACK_GAS)
+                .callback(evm_tx_params),
+        )
+    }
 
-        assert!(!encoded_data.is_empty());
-        assert_eq!(encoded_data, expected_data);
+    #[private]
+    pub fn callback(
+        &mut self,
+        #[callback_result] call_result: Result<SignatureResponse, PromiseError>,
+        ethereum_tx: EVMTransaction,
+    ) -> String {
+        match call_result {
+            Ok(signature_response) => {
+                env::log_str(&format!(
+                    "Successfully received signature: big_r = {:?}, s = {:?}, recovery_id = {}",
+                    signature_response.big_r, signature_response.s, signature_response.recovery_id
+                ));
+
+                // Extract r and s from the signature response
+                let affine_point_bytes = hex::decode(signature_response.big_r.affine_point)
+                    .expect("Failed to decode affine_point to bytes");
+
+                env::log_str(&format!(
+                    "Decoded affine_point bytes (length: {}): {:?}",
+                    affine_point_bytes.len(),
+                    hex::encode(&affine_point_bytes)
+                ));
+
+                // Extract r from the affine_point_bytes
+                let r_bytes = affine_point_bytes[1..33].to_vec();
+                assert_eq!(r_bytes.len(), 32, "r must be 32 bytes");
+
+                env::log_str(&format!(
+                    "Extracted r (32 bytes): {:?}",
+                    hex::encode(&r_bytes)
+                ));
+
+                let s_bytes = hex::decode(signature_response.s.scalar)
+                    .expect("Failed to decode scalar to bytes");
+
+                assert_eq!(s_bytes.len(), 32, "s must be 32 bytes");
+
+                env::log_str(&format!(
+                    "Decoded s (32 bytes): {:?}",
+                    hex::encode(&s_bytes)
+                ));
+
+                // decode the address from the signature response
+
+                // Calculate v
+                let v = signature_response.recovery_id as u64;
+                env::log_str(&format!("Calculated v: {}", v));
+
+                let signature_omni = Signature {
+                    v,
+                    r: r_bytes,
+                    s: s_bytes,
+                };
+                let omni_evm_tx_encoded_with_signature =
+                    ethereum_tx.build_with_signature(&signature_omni);
+
+                env::log_str(&format!(
+                    "Successfully signed transaction: {:?}",
+                    omni_evm_tx_encoded_with_signature
+                ));
+
+                // Serialise the updated transaction
+                hex::encode(omni_evm_tx_encoded_with_signature)
+            }
+            Err(error) => {
+                env::log_str(&format!("Callback failed with error: {:?}", error));
+                "Callback failed".to_string()
+            }
+        }
     }
 }

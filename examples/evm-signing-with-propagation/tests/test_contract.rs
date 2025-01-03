@@ -1,14 +1,14 @@
 // Near dependencies
 use near_primitives::action::FunctionCallAction;
 // OmniBox dependencies
-use omni_box::utils::address;
+use omni_box::utils::{address, signature};
 use omni_box::OmniBox;
 // Omni Transaction Dependencies
 use omni_transaction::evm::evm_transaction::EVMTransaction;
 // Other Dependencies
+use alloy::providers::Provider;
+use alloy::providers::ProviderBuilder;
 use serde_json::json;
-// Alloy Dependencies
-use alloy_primitives::keccak256;
 
 fn vec_to_array(vec: Vec<u8>) -> Result<[u8; 20], &'static str> {
     if vec.len() == 20 {
@@ -27,7 +27,6 @@ async fn test_simple_encoding_with_args() -> Result<(), Box<dyn std::error::Erro
     let omni_box = OmniBox::new().await;
 
     let evm_context = &omni_box.evm_context;
-    let _near_context = &omni_box.near_context;
 
     // Prepare the transaction
     let to_address = &omni_box.evm_context.alice;
@@ -57,69 +56,40 @@ async fn test_simple_encoding_with_args() -> Result<(), Box<dyn std::error::Erro
 
     println!("derived_address: {:?}", derived_address.address);
 
-    let method_name = "get_transaction_encoded_data";
-    let args = json!({
-        "evm_tx_params": tx
-    });
-
-    // Call the contract
-    let transaction_payload = &omni_box
-        .friendly_near_json_rpc_client
-        .call_contract::<Vec<u8>>(method_name, args)
-        .await?;
-
     let attached_deposit = omni_box.get_experimental_signature_deposit().await?;
-    println!("attached_deposit: {}", attached_deposit);
-    println!("transaction_payload response: {:?}", transaction_payload);
 
-    // Hash the encoded transaction
-    let omni_evm_tx_hash = keccak256(&transaction_payload);
-    println!("transaction_payload hash: {:?}", omni_evm_tx_hash.to_vec());
-
-    // Compare if keccak256 is working correctly
-    let method_name_2 = "get_transaction_hash";
-    let args_2 = json!({
-        "evm_tx_params": tx
+    let args = json!({
+        "evm_tx_params": tx,
+        "attached_deposit": attached_deposit
     });
 
     // Call the contract
-    let transaction_payload_2 = &omni_box
+    let signer_response = omni_box
         .friendly_near_json_rpc_client
-        .call_contract::<Vec<u8>>(method_name_2, args_2)
+        .send_action(FunctionCallAction {
+            method_name: "hash_and_sign_transaction".to_string(),
+            args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
+            gas: 300000000000000,
+            deposit: 1000000000000000000000000,
+        })
         .await?;
 
-    println!(
-        "transaction_payload_2 response: {:?}",
-        transaction_payload_2.to_vec()
-    );
+    println!("signer_response: {:?}", signer_response);
 
-    assert_eq!(omni_evm_tx_hash.to_vec(), transaction_payload_2.to_vec());
+    // Convert the transaction to a hexadecimal string
+    let hex_omni_tx = signature::extract_signed_transaction(&signer_response).unwrap();
+    println!("hex_omni_tx: {:?}", hex_omni_tx);
 
-    // // Create the args for the sign_sighash_p2pkh method
-    // let args = json!({
-    //     "hash": hex::encode(omni_evm_tx_hash),
-    //     "attached_deposit": attached_deposit.to_string()
-    // });
+    // Create a provider with the wallet.
+    let rpc_url = evm_context.anvil.endpoint().parse()?;
+    let provider = ProviderBuilder::new()
+        .with_recommended_fillers()
+        .on_http(rpc_url);
 
-    // let signer_response = omni_box
-    //     .friendly_near_json_rpc_client
-    //     .send_action(FunctionCallAction {
-    //         method_name: "sign_transaction".to_string(),
-    //         args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
-    //         gas: 100_000_000_000_000,
-    //         deposit: 1000000000000000000000000,
-    //     })
-    //     .await?;
-
-    // // Propagate a EVM node
-    // // Send the transaction
-    // match provider
-    //     .send_raw_transaction(&omni_evm_tx_encoded_with_signature)
-    //     .await
-    // {
-    //     Ok(tx_hash) => println!("Transaction sent successfully. Hash: {:?}", tx_hash),
-    //     Err(e) => println!("Failed to send transaction: {:?}", e),
-    // }
+    match provider.send_raw_transaction(&hex_omni_tx).await {
+        Ok(tx_hash) => println!("Transaction sent successfully. Hash: {:?}", tx_hash),
+        Err(e) => println!("Failed to send transaction: {:?}", e),
+    }
 
     Ok(())
 }
