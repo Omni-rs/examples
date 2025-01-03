@@ -1,0 +1,31 @@
+[package]
+name = "evm-signing-with-propagation-local-signing"
+publish.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+near-sdk.workspace = true
+omni-transaction.workspace = true
+hex.workspace = true
+
+[dev-dependencies]
+near-sdk = { version = "5.5.0", features = ["unit-testing"] }
+near-workspaces.workspace = true
+tokio.workspace = true
+serde_json.workspace = true
+omni-box.workspace = true
+near-primitives = "0.25.0"
+alloy-primitives = { version = "0.8.3" }
+alloy = { version = "0.6.2", features = ["full", "node-bindings", "rlp"] }
