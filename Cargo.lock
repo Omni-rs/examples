@@ -1067,7 +1067,6 @@ dependencies = [
  "near-primitives 0.25.0",
  "near-sdk",
  "near-workspaces 0.14.1",
- "omni-box",
  "omni-testing-utilities",
  "omni-transaction",
  "ripemd",
