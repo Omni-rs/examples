@@ -1,4 +1,4 @@
-# EVM: Simple Signing with Propagation
+# EVM: Simple Signing with Propagation (Local Signing)
 
 This example demonstrates how to sign an EVM transaction using the MPC  (Multi-Party Computation) signer from a NEAR contract and propagate the transaction to the EVM Chain (local network).
 
@@ -26,5 +26,5 @@ Since this example deploys the NEAR contract to the NEAR testnet, you need to ha
 Then run the following command to test the contract:
 
 ```bash
-just run evm-signing-with-propagation
+just run evm-signing-with-propagation-local-signing
 ```

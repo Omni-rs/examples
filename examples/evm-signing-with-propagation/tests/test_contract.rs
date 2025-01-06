@@ -1,9 +1,13 @@
-use omni_box::utils::address; // signature
-use omni_box::OmniBox;
-use omni_transaction::evm::evm_transaction::EVMTransaction;
-use serde_json::json;
 // Near dependencies
-// use near_primitives::action::FunctionCallAction;
+use near_primitives::action::FunctionCallAction;
+// OmniBox dependencies
+use omni_box::utils::{address, signature};
+use omni_box::OmniBox;
+// Omni Transaction Dependencies
+use omni_transaction::evm::evm_transaction::EVMTransaction;
+// Other Dependencies
+use alloy::providers::Provider;
+use serde_json::json;
 
 fn vec_to_array(vec: Vec<u8>) -> Result<[u8; 20], &'static str> {
     if vec.len() == 20 {
@@ -22,7 +26,6 @@ async fn test_simple_encoding_with_args() -> Result<(), Box<dyn std::error::Erro
     let omni_box = OmniBox::new().await;
 
     let evm_context = &omni_box.evm_context;
-    let _near_context = &omni_box.near_context;
 
     // Prepare the transaction
     let to_address = &omni_box.evm_context.alice;
@@ -47,42 +50,44 @@ async fn test_simple_encoding_with_args() -> Result<(), Box<dyn std::error::Erro
         access_list: vec![],
     };
 
-    let _derived_address =
+    let derived_address =
         address::get_derived_address_for_evm(&omni_box.deployer_account.account_id, PATH);
 
-    let method_name = "get_transaction_encoded_data";
+    println!("derived_address: {:?}", derived_address.address);
+    let attached_deposit = omni_box.get_experimental_signature_deposit().await?;
+
     let args = json!({
-        "evm_tx_params": tx
+        "evm_tx_params": tx,
+        "attached_deposit": attached_deposit.to_string()
     });
 
     // Call the contract
-    let transaction_payload = &omni_box
+    let signer_response = omni_box
         .friendly_near_json_rpc_client
-        .call_contract::<Vec<u8>>(method_name, args)
+        .send_action(FunctionCallAction {
+            method_name: "hash_and_sign_transaction".to_string(),
+            args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
+            gas: 300000000000000,
+            deposit: 1000000000000000000000000,
+        })
         .await?;
 
-    let attached_deposit = omni_box.get_experimental_signature_deposit().await?;
-    println!("attached_deposit: {}", attached_deposit);
-    println!("transaction_payload: {:?}", transaction_payload);
+    println!("signer_response: {:?}", signer_response);
 
-    // Create the args for the sign_sighash_p2pkh method
-    // let args = json!({
-    //     "sighash_p2pkh": hex::encode(msg_omni.as_ref()),
-    //     "attached_deposit": attached_deposit.to_string()
-    // });
+    // Convert the transaction to a hexadecimal string
+    let hex_omni_tx = signature::extract_signed_transaction(&signer_response).unwrap();
+    println!("omno tx in vec: {:?}", hex_omni_tx);
+    println!("omni tx in hex {:?}", hex::encode(&hex_omni_tx));
 
-    // let signer_response = omni_box
-    //     .friendly_near_json_rpc_client
-    //     .send_action(FunctionCallAction {
-    //         method_name: "sign_sighash_p2pkh".to_string(),
-    //         args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
-    //         gas: 100_000_000_000_000,
-    //         deposit: 1000000000000000000000000,
-    //     })
-    //     .await?;
-
-    // let (big_r, s) = signature::extract_big_r_and_s(&signer_response).unwrap();
-    // let signature_built = signature::create_signature(&big_r, &s);
+    match omni_box
+        .evm_context
+        .provider
+        .send_raw_transaction(&hex_omni_tx)
+        .await
+    {
+        Ok(tx_hash) => println!("Transaction sent successfully. Hash: {:?}", tx_hash),
+        Err(e) => println!("Failed to send transaction: {:?}", e),
+    }
 
     Ok(())
 }

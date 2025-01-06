@@ -5,11 +5,10 @@ use near_sdk::{near, Gas, NearToken, PromiseError};
 use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{EcdsaSighashType, ScriptBuf, TransactionType};
 use omni_transaction::bitcoin::utils::{build_script_sig, serialize_ecdsa_signature_from_str};
+use omni_transaction::signer::types::{mpc_contract, SignRequest, SignatureResponse};
 pub mod external;
-pub mod types;
 
-use external::{mpc_contract, this_contract};
-use types::{SignRequest, SignatureResponse};
+use external::this_contract;
 
 const MPC_CONTRACT_ACCOUNT_ID: &str = "v1.signer-prod.testnet";
 const GAS: Gas = Gas::from_tgas(50);
