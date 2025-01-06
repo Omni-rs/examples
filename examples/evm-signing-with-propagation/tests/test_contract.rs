@@ -7,7 +7,6 @@ use omni_box::OmniBox;
 use omni_transaction::evm::evm_transaction::EVMTransaction;
 // Other Dependencies
 use alloy::providers::Provider;
-use alloy::providers::ProviderBuilder;
 use serde_json::json;
 
 fn vec_to_array(vec: Vec<u8>) -> Result<[u8; 20], &'static str> {
@@ -55,12 +54,11 @@ async fn test_simple_encoding_with_args() -> Result<(), Box<dyn std::error::Erro
         address::get_derived_address_for_evm(&omni_box.deployer_account.account_id, PATH);
 
     println!("derived_address: {:?}", derived_address.address);
-
     let attached_deposit = omni_box.get_experimental_signature_deposit().await?;
 
     let args = json!({
         "evm_tx_params": tx,
-        "attached_deposit": attached_deposit
+        "attached_deposit": attached_deposit.to_string()
     });
 
     // Call the contract
@@ -78,15 +76,15 @@ async fn test_simple_encoding_with_args() -> Result<(), Box<dyn std::error::Erro
 
     // Convert the transaction to a hexadecimal string
     let hex_omni_tx = signature::extract_signed_transaction(&signer_response).unwrap();
-    println!("hex_omni_tx: {:?}", hex_omni_tx);
+    println!("omno tx in vec: {:?}", hex_omni_tx);
+    println!("omni tx in hex {:?}", hex::encode(&hex_omni_tx));
 
-    // Create a provider with the wallet.
-    let rpc_url = evm_context.anvil.endpoint().parse()?;
-    let provider = ProviderBuilder::new()
-        .with_recommended_fillers()
-        .on_http(rpc_url);
-
-    match provider.send_raw_transaction(&hex_omni_tx).await {
+    match omni_box
+        .evm_context
+        .provider
+        .send_raw_transaction(&hex_omni_tx)
+        .await
+    {
         Ok(tx_hash) => println!("Transaction sent successfully. Hash: {:?}", tx_hash),
         Err(e) => println!("Failed to send transaction: {:?}", e),
     }
