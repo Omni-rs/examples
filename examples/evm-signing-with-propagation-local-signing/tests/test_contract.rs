@@ -90,10 +90,7 @@ async fn test_simple_encoding_with_args() -> Result<(), Box<dyn std::error::Erro
         .on_http(rpc_url);
 
     // Sign the transaction hash
-    let omni_evm_tx_hash_fixed: [u8; 32] = omni_evm_tx_hash
-        .try_into()
-        .expect("slice with incorrect length");
-    let omni_evm_tx_hash_fixed = omni_evm_tx_hash_fixed.into();
+    let omni_evm_tx_hash_fixed = omni_evm_tx_hash.into();
     let signature = signer.sign_hash(&omni_evm_tx_hash_fixed).await?;
 
     println!("signature: {:?}", signature);

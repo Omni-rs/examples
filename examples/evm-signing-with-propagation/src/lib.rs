@@ -29,10 +29,7 @@ impl Contract {
         let tx_hash = env::keccak256(&encoded_data);
 
         // Ensure the payload is exactly 32 bytes
-        let payload: [u8; 32] = tx_hash
-            .clone()
-            .try_into()
-            .expect("Payload must be 32 bytes long");
+        let payload: [u8; 32] = tx_hash.try_into().expect("Payload must be 32 bytes long");
 
         let request: SignRequest = SignRequest {
             payload,
