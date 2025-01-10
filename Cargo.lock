@@ -947,8 +947,8 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c8d66485a3a2ea485c1913c4572ce0256067a5377ac8c75c4960e1cda98605f"
 dependencies = [
- "bitcoin-internals",
- "bitcoin_hashes",
+ "bitcoin-internals 0.3.0",
+ "bitcoin_hashes 0.14.0",
 ]
 
 [[package]]
@@ -1006,6 +1006,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bip39"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33415e24172c1b7d6066f6d999545375ab8e1d95421d6784bdfff9496f292387"
+dependencies = [
+ "bitcoin_hashes 0.13.0",
+ "serde",
+ "unicode-normalization",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1028,15 +1039,21 @@ checksum = "ce6bc65742dea50536e35ad42492b234c27904a27f0abdcbce605015cb4ea026"
 dependencies = [
  "base58ck",
  "bech32",
- "bitcoin-internals",
+ "bitcoin-internals 0.3.0",
  "bitcoin-io",
  "bitcoin-units",
- "bitcoin_hashes",
- "hex-conservative",
+ "bitcoin_hashes 0.14.0",
+ "hex-conservative 0.2.1",
  "hex_lit",
  "secp256k1 0.29.1",
  "serde",
 ]
+
+[[package]]
+name = "bitcoin-internals"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9425c3bf7089c983facbae04de54513cce73b41c7f9ff8c845b54e7bc64ebbfb"
 
 [[package]]
 name = "bitcoin-internals"
@@ -1144,6 +1161,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-signing-with-propagation-legacy-advanced-2"
+version = "0.0.1"
+dependencies = [
+ "bip39",
+ "bitcoin",
+ "bs58 0.5.1",
+ "hex",
+ "k256",
+ "near-crypto 0.25.0",
+ "near-jsonrpc-client 0.12.0 (git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1)",
+ "near-jsonrpc-primitives 0.25.0",
+ "near-primitives 0.25.0",
+ "near-sdk",
+ "omni-box",
+ "omni-testing-utilities",
+ "omni-transaction",
+ "reqwest",
+ "ripemd",
+ "schemars",
+ "serde_json",
+ "sha3",
+ "tokio",
+]
+
+[[package]]
 name = "bitcoin-signing-with-propagation-segwit"
 version = "0.0.1"
 dependencies = [
@@ -1182,8 +1224,18 @@ version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5285c8bcaa25876d07f37e3d30c303f2609179716e11d688f51e8f1fe70063e2"
 dependencies = [
- "bitcoin-internals",
+ "bitcoin-internals 0.3.0",
  "serde",
+]
+
+[[package]]
+name = "bitcoin_hashes"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1930a4dabfebb8d7d9992db18ebe3ae2876f0a305fab206fd168df931ede293b"
+dependencies = [
+ "bitcoin-internals 0.2.0",
+ "hex-conservative 0.1.2",
 ]
 
 [[package]]
@@ -1193,7 +1245,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb18c03d0db0247e147a21a6faafd5a7eb851c743db062de72018b6b7e8e4d16"
 dependencies = [
  "bitcoin-io",
- "hex-conservative",
+ "hex-conservative 0.2.1",
  "serde",
 ]
 
@@ -1218,7 +1270,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a46c503eb22d68f862a69994bd29f0c64640ba12f95972ff4bffd16b6cea3430"
 dependencies = [
  "anyhow",
- "bitcoin_hashes",
+ "bitcoin_hashes 0.14.0",
  "bitcoind-json-rpc-client",
  "flate2",
  "log",
@@ -1237,7 +1289,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "577f0fb03bb12368933432eceba219948fc14ea8c9dba46e7d79a19d7fa92a6e"
 dependencies = [
  "bitcoin",
- "bitcoin-internals",
+ "bitcoin-internals 0.3.0",
  "serde",
  "serde_json",
 ]
@@ -2614,6 +2666,12 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "hex-conservative"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "212ab92002354b4819390025006c897e8140934349e8635c9b077f47b4dcbd20"
 
 [[package]]
 name = "hex-conservative"
@@ -5397,7 +5455,7 @@ version = "0.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9465315bc9d4566e1724f0fffcbcc446268cb522e60f9a27bcded6b19c108113"
 dependencies = [
- "bitcoin_hashes",
+ "bitcoin_hashes 0.14.0",
  "rand",
  "secp256k1-sys 0.10.1",
  "serde",
@@ -6320,6 +6378,15 @@ name = "unicode-ident"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adb9e6ca4f869e1180728b7950e35922a7fc6397f7b641499e8f3ef06e50dc83"
+
+[[package]]
+name = "unicode-normalization"
+version = "0.1.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c5713f0fc4b5db668a2ac63cdb7bb4469d8c9fed047b1d0292cc7b0ce2ba921"
+dependencies = [
+ "tinyvec",
+]
 
 [[package]]
 name = "unicode-width"

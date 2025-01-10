@@ -68,73 +68,28 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
         derived_address.address
     );
 
-    // {
-    //     "version": 2,
-    //     "locktime": 0,
-    //     "ins": [
-    //       {
-    //         "n": 1,
-    //         "script": {
-    //           "asm": "",
-    //           "hex": ""
-    //         },
-    //         "sequence": 4294967295,
-    //         "txid": "14e037cde8e7ac30ed07d74cbad42fb21107f7e4f3babc44310c8284bc900618",
-    //         "witness": [
-    //           "304402200ddec6be1515f9da3e343505a7c6b4b019daa9f25a96ba54ca127f2238baf57602203defc1e49bf5ca176e36dbdbaf0f66aa04d40d2652f8723dcbce922b7c0fe96601",
-    //           "0348e6a269c73fde03bfddaf0f4c147ddf7847cf2d027b515198a761ee3617a69a"
-    //         ]
-    //       }
-    //     ],
-    //     "outs": [
-    //       {
-    //         "n": 0,
-    //         "script": {
-    //           "addresses": ["1HAVcb5TMEsvREcCcn1zpb39aYmJYsVfss"],
-    //           "asm": "OP_DUP OP_HASH160 b14da44077bd985df6eb9aa04fd18322a85ba301 OP_EQUALVERIFY OP_CHECKSIG",
-    //           "hex": "76a914b14da44077bd985df6eb9aa04fd18322a85ba30188ac"
-    //         },
-    //         "value": 100000000
-    //       },
-    //       {
-    //         "n": 1,
-    //         "script": {
-    //           "addresses": ["bc1qsj4c53fwtx5sgnl6t9yv6qmvj2tc2ktkgyus0d"],
-    //           "asm": "OP_0 84ab8a452e59a9044ffa5948cd036c9297855976",
-    //           "hex": "001484ab8a452e59a9044ffa5948cd036c9297855976"
-    //         },
-    //         "value": 1816180134
-    //       }
-    //     ],
-    //     "hash": "7e24ce0240f22bed9bb194d706fa818da8240ec49b9f1556c4b38452d17a5399",
-    //     "txid": "7e24ce0240f22bed9bb194d706fa818da8240ec49b9f1556c4b38452d17a5399"
-    //   }
-
     let tx_id_str = "e9e5a1adf897fc7488d89afe1f862a61ad4c738ecca94b877f71c32ce7bef3f3";
     let tx_id = OmniHash::from_hex(tx_id_str).unwrap();
-    let previous_output = OutPoint::new(Txid(tx_id), 1);
-    let witness_data = vec![
-        hex::decode("304402200ddec6be1515f9da3e343505a7c6b4b019daa9f25a96ba54ca127f2238baf57602203defc1e49bf5ca176e36dbdbaf0f66aa04d40d2652f8723dcbce922b7c0fe96601").unwrap(),
-        hex::decode("0348e6a269c73fde03bfddaf0f4c147ddf7847cf2d027b515198a761ee3617a69a").unwrap(),
-    ];
-    let witness = Witness::from_slice(&witness_data);
+    let vout = 1;
+    let previous_output = OutPoint::new(Txid(tx_id), vout);
 
     let tx_in: TxIn = TxIn {
         previous_output,
         script_sig: ScriptBuf::default(),
         sequence: Sequence::MAX,
-        witness,
+        witness: Witness::default(),
     };
 
-    let utxo_amount = Amount::from_sat(100000000);
-    let amount_to_spend = Amount::from_sat(1000000);
+    let utxo_amount = Amount::from_sat(51705);
+    let amount_to_spend = Amount::from_sat(30000); // 0.00030000 tBTC
     let change_amount: Amount = utxo_amount - amount_to_spend - Amount::from_sat(1000); // 1000 satoshis for fee
 
-    let contract_script_pub_key =
-        ScriptBuf::from_hex("76a914b14da44077bd985df6eb9aa04fd18322a85ba30188ac").unwrap();
+    // The script_pub_key of the NEAR contract account
+    let contract_script_pub_key: ScriptBuf =
+        ScriptBuf::from_hex("76a914b14da44077bd985df6eb9aa04fd18322a85ba30188ac").unwrap(); // TODO: Fix this
 
     let sender_pub_key =
-        ScriptBuf::from_hex("001484ab8a452e59a9044ffa5948cd036c9297855976").unwrap();
+        ScriptBuf::from_hex("76a9142dc9b23fccc8935d0e4fe5b69d80302a7d41118d88ac").unwrap();
 
     // Create the transaction output for the receiver
     let spending_txout = TxOut {
@@ -146,8 +101,8 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     // Create the transaction output for the change (sender)
     let change_txout = TxOut {
         value: change_amount,
-        // bc1qsj4c53fwtx5sgnl6t9yv6qmvj2tc2ktkgyus0d (the derived address of the account I derive from the seed phrase)
-        script_pubkey: sender_pub_key,
+        // mjh4Knmu8w3HYBrP4SGk6bXULj1QyaQ5dR (the derived address of the account I derive from the seed phrase)
+        script_pubkey: sender_pub_key.clone(),
     };
 
     let mut spending_tx: BitcoinTransaction = TransactionBuilder::new::<BITCOIN>()
@@ -162,7 +117,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     // --------------------------------------------
 
     // Add the script_sig to the transaction
-    spending_tx.input[0].script_sig = contract_script_pub_key;
+    spending_tx.input[0].script_sig = sender_pub_key;
 
     // Encode the transaction for signing
     let sighash_type = EcdsaSighashType::All;
@@ -243,8 +198,6 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 // //         deposit: 1000000000000000000000000,
 // //     })
 // //     .await?;
-
-// // let tx_to_be_signed = spending_tx.build_for_signing_legacy(EcdsaSighashType::All);
 
 // // extract the payload
 // let payload_to_be_signed = signature::extract_payload(&signer_response).unwrap();
