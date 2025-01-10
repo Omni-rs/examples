@@ -1,4 +1,4 @@
-# Bitcoin Signing with Propagation (Legacy) Advanced
+# Bitcoin Signing with Propagation (Legacy) Advanced Remote Signing
 
 This example demonstrates how to sign a Bitcoin transaction (legacy) using the MPC  (Multi-Party Computation) signer from a NEAR contract and propagate the transaction to the Bitcoin network (RegTest mode).
 
