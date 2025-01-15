@@ -19,5 +19,5 @@ Since this example deploys the NEAR contract to the NEAR testnet, you need to ha
 Then, to run the test, simply run the following command:
 
 ```bash
-just run bitcoin-signing-with-propagation-legacy-advanced
+just run bitcoin-signing-with-propagation-legacy-advanced-remote-signing
 ```

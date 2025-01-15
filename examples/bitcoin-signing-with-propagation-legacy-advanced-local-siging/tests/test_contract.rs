@@ -180,24 +180,3 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
 
     Ok(())
 }
-
-// --------------------------------------------
-// This is using the smart contract
-// --------------------------------------------
-
-// // let args = json!({
-// //     "bitcoin_tx": spending_tx
-// // });
-
-// // let signer_response = omni_box
-// //     .friendly_near_json_rpc_client
-// //     .send_action(FunctionCallAction {
-// //         method_name: "create_sighash".to_string(),
-// //         args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
-// //         gas: 300000000000000,
-// //         deposit: 1000000000000000000000000,
-// //     })
-// //     .await?;
-
-// // extract the payload
-// let payload_to_be_signed = signature::extract_payload(&signer_response).unwrap();
