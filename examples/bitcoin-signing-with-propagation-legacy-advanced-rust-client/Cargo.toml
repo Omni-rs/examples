@@ -1,5 +1,5 @@
 [package]
-name = "bitcoin-signing-with-propagation-legacy-advanced-2"
+name = "bitcoin-signing-with-propagation-legacy-advanced-rust-client"
 publish.workspace = true
 version.workspace = true
 edition.workspace = true
