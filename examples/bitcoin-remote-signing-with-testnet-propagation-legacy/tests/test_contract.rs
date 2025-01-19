@@ -3,7 +3,6 @@ use bitcoin::bip32::{DerivationPath, Xpriv};
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::PublicKey;
 use bitcoin::{Address, Network};
-use hex;
 use near_primitives::action::FunctionCallAction;
 use omni_box::utils::address::get_uncompressed_bitcoin_pubkey;
 use omni_box::utils::{address, signature};
@@ -29,7 +28,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     let phrase = "blame fall flame require shift similar square drive pass credit gold web tonight turn fine";
 
     let mnemonic =
-        Mnemonic::parse_in_normalized(Language::English, &phrase).expect("Invalid Mnemonic");
+        Mnemonic::parse_in_normalized(Language::English, phrase).expect("Invalid Mnemonic");
 
     let seed = mnemonic.to_seed("");
 
@@ -55,7 +54,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     let pubkey = PublicKey::new(child_key.private_key.public_key(&secp));
 
     // Generate the legacy address of the receiver (P2PKH)
-    let address = Address::p2pkh(&pubkey, Network::Testnet);
+    let address = Address::p2pkh(pubkey, Network::Testnet);
     println!("Legacy Address (P2PKH): {:?}", address);
 
     let omni_box: OmniBox = OmniBox::new().await;
