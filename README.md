@@ -1,6 +1,6 @@
 # Omni Transaction Rust library examples
 
-This repository contains a set of examples that demonstrate how to use the main features of OmniTransactionBuilder.
+This repository contains a set of examples that demonstrate how to use the main features of the [Omni Transaction library] and [OmniBox].
 
 [![Telegram chat][telegram-badge]][telegram-url]
 
@@ -44,29 +44,30 @@ The recommendation is to go thought each example and read the annotated integrat
 
 ### EVM
 
-- [x] [Simple encoding](./examples/evm-simple-encoding)
-- [x] [Simple encoding passing args](./examples/evm-simple-encoding-passing-args)
-- [x] [Simple encoding with signature](./examples/evm-simple-encoding-with-signature)
-- [ ] [Simple signing](#)
-- [ ] [Signing with propagation](#)
+- [X] [Encoding](./examples/evm-simple-encoding)
+- [X] [Encoding passing args](./examples/evm-simple-encoding-passing-args)
+- [X] [Encoding with signature](./examples/evm-simple-encoding-with-signature)
+- [X] [Local signing with propagation](./examples/evm-local-signing-with-propagation/)
+- [X] [Remote (MPC) signing with propagation](./examples/evm-remote-signing-with-propagation/)
 
 ### NEAR
 
-- [x] [Simple encoding](./examples/near-simple-encoding)
-- [x] [Simple encoding passing args](./examples/near-simple-encoding-passing-args)
-- [ ] [Simple encoding with signature](#)
-- [ ] [Simple signing](#)
-- [ ] [Signing with propagation](#)
+- [X] [Simple encoding](./examples/near-simple-encoding)
+- [X] [Simple encoding passing args](./examples/near-simple-encoding-passing-args)
 
 ### Bitcoin
 
-- [x] [Simple encoding](./examples/bitcoin-simple-encoding)
+- [X] [Simple encoding](./examples/bitcoin-simple-encoding)
 - [ ] [Simple encoding passing args](./examples/bitcoin-simple-encoding-passing-args)
 - [ ] [Simple signing (legacy)](#)
-- [x] [Simple signing (segwit)](./examples/bitcoin-signing-segwit/)
-- [x] [Signing with propagation (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
+- [X] [Simple signing (segwit)](./examples/bitcoin-signing-segwit/)
+- [X] [Signing with propagation (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
 - [ ] [Signing with propagation (segwit)](#)
-- [x] [Signing (segwit) multiple UTXOs](./examples/bitcoin-signing-segwit-multiple-utxos/)
+- [X] [Signing (segwit) multiple UTXOs](./examples/bitcoin-signing-segwit-multiple-utxos/)
 - [ ] [Signing (segwit) multiple UTXOs with propagation](#)
 - [ ] [Runes Etching](#)
 - [ ] [Ordinals inscriptions](#)
+
+<!-- References -->
+[Omni Transaction library]: https://github.com/near/omni-transaction-rs
+[OmniBox]: https://github.com/Omni-rs/omni-box

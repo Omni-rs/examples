@@ -2251,7 +2251,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "evm-signing-with-propagation"
+name = "evm-local-signing-with-propagation"
 version = "0.0.1"
 dependencies = [
  "alloy",
@@ -2267,7 +2267,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "evm-signing-with-propagation-local-signing"
+name = "evm-remote-signing-with-propagation"
 version = "0.0.1"
 dependencies = [
  "alloy",
