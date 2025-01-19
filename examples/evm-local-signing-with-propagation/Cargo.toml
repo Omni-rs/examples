@@ -1,5 +1,5 @@
 [package]
-name = "evm-signing-with-propagation-local-signing"
+name = "evm-local-signing-with-propagation"
 publish.workspace = true
 version.workspace = true
 edition.workspace = true
