@@ -64,8 +64,8 @@ The recommendation is to go thought each example and read the annotated integrat
 - [X] [Signing with propagation (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
 - [X] [Signing with propagation advanced (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
 - [X] [Signing with propagation using a Rust client (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
-- [X] [Signing with testnet propagation and local signing](./examples/bitcoin-local-signing-with-propagation-legacy-advanced/)
-- [X] [Signing with testnet propagation and remote signing (MPC)](./examples/bitcoin-remote-signing-with-propagation-legacy-advanced/)
+- [X] [Signing with testnet propagation and local signing](./examples/bitcoin-local-signing-with-testnet-propagation-legacy/)
+- [X] [Signing with testnet propagation and remote signing (MPC)](./examples/bitcoin-remote-signing-with-testnet-propagation-legacy/)
 - [ ] [Runes Etching](#)
 - [ ] [Ordinals inscriptions](#)
 
