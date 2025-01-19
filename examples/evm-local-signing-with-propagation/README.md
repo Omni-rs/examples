@@ -1,6 +1,6 @@
 # EVM: Local Signing with Propagation
 
-This example demonstrates how to sign an EVM transaction using a local signer from a NEAR contract and propagate the transaction to the EVM Chain (local network from the OmniBox).
+This example demonstrates how to sign an EVM transaction that is encoded within a NEAR contract but using a local signer and propagate the transaction to the EVM Chain (local network from the OmniBox).
 
 ## Overview
 
