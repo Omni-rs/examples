@@ -57,14 +57,15 @@ The recommendation is to go thought each example and read the annotated integrat
 
 ### Bitcoin
 
-- [X] [Simple encoding](./examples/bitcoin-simple-encoding)
-- [ ] [Simple encoding passing args](./examples/bitcoin-simple-encoding-passing-args)
-- [ ] [Simple signing (legacy)](#)
-- [X] [Simple signing (segwit)](./examples/bitcoin-signing-segwit/)
-- [X] [Signing with propagation (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
-- [ ] [Signing with propagation (segwit)](#)
+- [X] [Encoding (P2PKH and P2WPKH)](./examples/bitcoin-simple-encoding)
+- [X] [Signing (segwit)](./examples/bitcoin-signing-segwit/)
 - [X] [Signing (segwit) multiple UTXOs](./examples/bitcoin-signing-segwit-multiple-utxos/)
-- [ ] [Signing (segwit) multiple UTXOs with propagation](#)
+- [X] [Signing with propagation (segwit)](./examples/bitcoin-signing-with-propagation-segwit/)
+- [X] [Signing with propagation (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
+- [X] [Signing with propagation advanced (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
+- [X] [Signing with propagation using a Rust client (legacy)](./examples/bitcoin-signing-with-propagation-legacy)
+- [X] [Signing with testnet propagation and local signing](./examples/bitcoin-local-signing-with-propagation-legacy-advanced/)
+- [X] [Signing with testnet propagation and remote signing (MPC)](./examples/bitcoin-remote-signing-with-propagation-legacy-advanced/)
 - [ ] [Runes Etching](#)
 - [ ] [Ordinals inscriptions](#)
 

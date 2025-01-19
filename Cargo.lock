@@ -1071,6 +1071,56 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b47c4ab7a93edb0c7198c5535ed9b52b63095f4e9b45279c6736cec4b856baf"
 
 [[package]]
+name = "bitcoin-local-signing-with-propagation-legacy-advanced"
+version = "0.0.1"
+dependencies = [
+ "bip39",
+ "bitcoin",
+ "bs58 0.5.1",
+ "hex",
+ "k256",
+ "near-crypto 0.25.0",
+ "near-jsonrpc-client 0.12.0 (git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1)",
+ "near-jsonrpc-primitives 0.25.0",
+ "near-primitives 0.25.0",
+ "near-sdk",
+ "omni-box",
+ "omni-testing-utilities",
+ "omni-transaction",
+ "reqwest",
+ "ripemd",
+ "schemars",
+ "serde_json",
+ "sha3",
+ "tokio",
+]
+
+[[package]]
+name = "bitcoin-remote-signing-with-propagation-legacy-advanced"
+version = "0.0.1"
+dependencies = [
+ "bip39",
+ "bitcoin",
+ "bs58 0.5.1",
+ "hex",
+ "k256",
+ "near-crypto 0.25.0",
+ "near-jsonrpc-client 0.12.0 (git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1)",
+ "near-jsonrpc-primitives 0.25.0",
+ "near-primitives 0.25.0",
+ "near-sdk",
+ "omni-box",
+ "omni-testing-utilities",
+ "omni-transaction",
+ "reqwest",
+ "ripemd",
+ "schemars",
+ "serde_json",
+ "sha3",
+ "tokio",
+]
+
+[[package]]
 name = "bitcoin-signing-segwit"
 version = "0.0.1"
 dependencies = [
@@ -1153,56 +1203,6 @@ dependencies = [
  "omni-box",
  "omni-testing-utilities",
  "omni-transaction",
- "ripemd",
- "schemars",
- "serde_json",
- "sha3",
- "tokio",
-]
-
-[[package]]
-name = "bitcoin-signing-with-propagation-legacy-advanced-local-signing"
-version = "0.0.1"
-dependencies = [
- "bip39",
- "bitcoin",
- "bs58 0.5.1",
- "hex",
- "k256",
- "near-crypto 0.25.0",
- "near-jsonrpc-client 0.12.0 (git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1)",
- "near-jsonrpc-primitives 0.25.0",
- "near-primitives 0.25.0",
- "near-sdk",
- "omni-box",
- "omni-testing-utilities",
- "omni-transaction",
- "reqwest",
- "ripemd",
- "schemars",
- "serde_json",
- "sha3",
- "tokio",
-]
-
-[[package]]
-name = "bitcoin-signing-with-propagation-legacy-advanced-remote-signing"
-version = "0.0.1"
-dependencies = [
- "bip39",
- "bitcoin",
- "bs58 0.5.1",
- "hex",
- "k256",
- "near-crypto 0.25.0",
- "near-jsonrpc-client 0.12.0 (git+https://github.com/omni-rs/near-jsonrpc-client-rs?tag=v0.12.1)",
- "near-jsonrpc-primitives 0.25.0",
- "near-primitives 0.25.0",
- "near-sdk",
- "omni-box",
- "omni-testing-utilities",
- "omni-transaction",
- "reqwest",
  "ripemd",
  "schemars",
  "serde_json",
