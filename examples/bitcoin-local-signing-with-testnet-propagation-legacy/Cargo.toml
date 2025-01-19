@@ -1,5 +1,5 @@
 [package]
-name = "bitcoin-remote-signing-with-propagation-legacy-advanced"
+name = "bitcoin-local-signing-with-testnet-propagation-legacy"
 publish.workspace = true
 version.workspace = true
 edition.workspace = true

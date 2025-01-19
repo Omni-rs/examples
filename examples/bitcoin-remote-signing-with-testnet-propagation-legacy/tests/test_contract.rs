@@ -58,7 +58,7 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
     let address = Address::p2pkh(&pubkey, Network::Testnet);
     println!("Legacy Address (P2PKH): {:?}", address);
 
-    let omni_box = OmniBox::new().await;
+    let omni_box: OmniBox = OmniBox::new().await;
 
     // Get the derived address of the NEAR contract / deployer account
     let derived_address =

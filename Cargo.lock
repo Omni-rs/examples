@@ -1071,7 +1071,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b47c4ab7a93edb0c7198c5535ed9b52b63095f4e9b45279c6736cec4b856baf"
 
 [[package]]
-name = "bitcoin-local-signing-with-propagation-legacy-advanced"
+name = "bitcoin-local-signing-with-testnet-propagation-legacy"
 version = "0.0.1"
 dependencies = [
  "bip39",
@@ -1096,7 +1096,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bitcoin-remote-signing-with-propagation-legacy-advanced"
+name = "bitcoin-remote-signing-with-testnet-propagation-legacy"
 version = "0.0.1"
 dependencies = [
  "bip39",
@@ -1134,6 +1134,7 @@ dependencies = [
  "near-primitives 0.25.0",
  "near-sdk",
  "near-workspaces 0.14.1",
+ "omni-box",
  "omni-testing-utilities",
  "omni-transaction",
  "ripemd",

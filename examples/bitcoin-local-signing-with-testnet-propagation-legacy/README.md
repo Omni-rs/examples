@@ -1,6 +1,6 @@
-# Bitcoin Remote Signing with Propagation (Legacy) Advanced
+# Bitcoin Local Signing with Testnet Propagation (Legacy) Advanced
 
-This example demonstrates how to sign a Bitcoin transaction (legacy) using the MPC  (Multi-Party Computation) signer from a NEAR contract and propagate the transaction to the Bitcoin network (RegTest mode).
+This example demonstrates how to sign a Bitcoin transaction (legacy) using a local signer and propagate the transaction to the Bitcoin testnet.
 
 The example makes use of a callback pattern and makes the sighash and raw transaction creation in one single transaction.
 
@@ -19,5 +19,5 @@ Since this example deploys the NEAR contract to the NEAR testnet, you need to ha
 Then, to run the test, simply run the following command:
 
 ```bash
-just run bitcoin-remote-signing-with-propagation-legacy-advanced
+just run bitcoin-local-signing-with-testnet-propagation-legacy
 ```
