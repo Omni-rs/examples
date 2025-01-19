@@ -1,6 +1,6 @@
 # Omni Transaction Rust library examples
 
-This repository contains a set of examples that demonstrate how to use the main features of the [Omni Transaction library] and [OmniBox].
+This repository contains a set of examples that demonstrate how to use the main features of the [Omni Transaction] library and [OmniBox].
 
 [![Telegram chat][telegram-badge]][telegram-url]
 
@@ -70,5 +70,5 @@ The recommendation is to go thought each example and read the annotated integrat
 - [ ] [Ordinals inscriptions](#)
 
 <!-- References -->
-[Omni Transaction library]: https://github.com/near/omni-transaction-rs
+[Omni Transaction]: https://github.com/near/omni-transaction-rs
 [OmniBox]: https://github.com/Omni-rs/omni-box
