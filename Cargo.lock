@@ -1133,7 +1133,6 @@ dependencies = [
  "near-sdk",
  "near-workspaces 0.14.1",
  "omni-box",
- "omni-testing-utilities",
  "omni-transaction",
  "ripemd",
  "serde_json",

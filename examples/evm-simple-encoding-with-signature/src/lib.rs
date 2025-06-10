@@ -1,9 +1,9 @@
 use near_sdk::near;
-use omni_transaction::evm::evm_transaction::EVMTransaction;
 use omni_transaction::evm::types::Signature;
-use omni_transaction::transaction_builder::TransactionBuilder;
-use omni_transaction::transaction_builder::TxBuilder;
-use omni_transaction::types::EVM;
+use omni_transaction::evm::EVMTransaction;
+use omni_transaction::TransactionBuilder;
+use omni_transaction::TxBuilder;
+use omni_transaction::EVM;
 
 #[near(contract_state)]
 #[derive(Default)]

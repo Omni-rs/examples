@@ -1,5 +1,5 @@
 use near_sdk::near;
-use omni_transaction::evm::evm_transaction::EVMTransaction;
+use omni_transaction::evm::EVMTransaction;
 
 #[near(contract_state)]
 #[derive(Default)]
@@ -15,8 +15,8 @@ impl Contract {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use omni_transaction::evm::evm_transaction::EVMTransaction;
     use omni_transaction::evm::utils::parse_eth_address;
+    use omni_transaction::evm::EVMTransaction;
 
     #[test]
     fn test_get_transaction_encoded_when_passing_tx() {

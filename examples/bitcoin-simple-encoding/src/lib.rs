@@ -3,9 +3,9 @@ use omni_transaction::bitcoin::types::{
     Amount, EcdsaSighashType, Hash, LockTime, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid,
     Version, Witness,
 };
-use omni_transaction::transaction_builder::TransactionBuilder;
-use omni_transaction::transaction_builder::TxBuilder;
-use omni_transaction::types::BITCOIN;
+use omni_transaction::TransactionBuilder;
+use omni_transaction::TxBuilder;
+use omni_transaction::BITCOIN;
 
 #[near(contract_state)]
 #[derive(Default)]

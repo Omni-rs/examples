@@ -1,5 +1,5 @@
 use near_sdk::near;
-use omni_transaction::near::near_transaction::NearTransaction;
+use omni_transaction::near::NearTransaction;
 
 #[near(contract_state)]
 #[derive(Default)]
@@ -23,8 +23,7 @@ mod tests {
             },
             utils::PublicKeyStrExt,
         },
-        transaction_builder::{TransactionBuilder, TxBuilder},
-        types::NEAR,
+        NEAR, {TransactionBuilder, TxBuilder},
     };
 
     use super::*;

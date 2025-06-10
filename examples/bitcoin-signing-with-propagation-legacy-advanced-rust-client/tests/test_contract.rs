@@ -8,13 +8,13 @@ use bitcoin::PublicKey;
 use bitcoin::{Address, Network};
 use omni_box::utils::address;
 use omni_box::OmniBox;
-use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
     Amount, EcdsaSighashType, Hash as OmniHash, LockTime, OutPoint, ScriptBuf, Sequence,
     TransactionType, TxIn, TxOut, Txid, Version, Witness,
 };
-use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
-use omni_transaction::types::BITCOIN;
+use omni_transaction::bitcoin::BitcoinTransaction;
+use omni_transaction::BITCOIN;
+use omni_transaction::{TransactionBuilder, TxBuilder};
 use reqwest::Client;
 use std::str::FromStr;
 

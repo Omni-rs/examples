@@ -2,8 +2,8 @@ use near_sdk::serde::Serialize;
 use near_sdk::{ext_contract, Promise};
 use near_sdk::{near, Gas, NearToken};
 
-use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::EcdsaSighashType;
+use omni_transaction::bitcoin::BitcoinTransaction;
 
 const MPC_CONTRACT_ACCOUNT_ID: &str = "v1.signer-prod.testnet";
 const GAS: Gas = Gas::from_tgas(50);

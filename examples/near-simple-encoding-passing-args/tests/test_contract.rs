@@ -3,8 +3,7 @@ use omni_transaction::{
         types::{AccessKey, AccessKeyPermission, Action, AddKeyAction, TransferAction, U128, U64},
         utils::PublicKeyStrExt,
     },
-    transaction_builder::{TransactionBuilder, TxBuilder},
-    types::NEAR,
+    NEAR, {TransactionBuilder, TxBuilder},
 };
 use serde_json::json;
 

@@ -1,5 +1,5 @@
 use near_sdk::ext_contract;
-use omni_transaction::evm::evm_transaction::EVMTransaction;
+use omni_transaction::evm::EVMTransaction;
 
 #[allow(dead_code)]
 #[ext_contract(this_contract)]

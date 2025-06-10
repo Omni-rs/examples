@@ -1,6 +1,6 @@
 use near_sdk::{env, near, Gas, NearToken, Promise, PromiseError};
-use omni_transaction::evm::evm_transaction::EVMTransaction;
 use omni_transaction::evm::types::Signature;
+use omni_transaction::evm::EVMTransaction;
 use omni_transaction::signer::types::{mpc_contract, SignRequest, SignatureResponse};
 
 pub mod external;
@@ -29,7 +29,14 @@ impl Contract {
         let tx_hash = env::keccak256(&encoded_data);
 
         // Ensure the payload is exactly 32 bytes
-        let payload: [u8; 32] = tx_hash.try_into().expect("Payload must be 32 bytes long");
+        let payload: [u8; 32] = tx_hash
+            .clone()
+            .try_into()
+            .expect("Payload must be 32 bytes long");
+
+        env::log_str(&format!("Hashed transaction: {:?}", hex::encode(&tx_hash)));
+
+        env::log_str(&format!("Payload (32 bytes): {:?}", hex::encode(&payload)));
 
         let request: SignRequest = SignRequest {
             payload,

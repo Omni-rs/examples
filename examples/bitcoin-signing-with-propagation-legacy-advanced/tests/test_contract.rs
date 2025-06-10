@@ -1,12 +1,12 @@
 // Near dependencies
 use near_primitives::action::FunctionCallAction;
 // Omni Transaction Dependencies
-use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
     Amount, LockTime, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Version, Witness,
 };
-use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
-use omni_transaction::types::BITCOIN;
+use omni_transaction::bitcoin::BitcoinTransaction;
+use omni_transaction::BITCOIN;
+use omni_transaction::{TransactionBuilder, TxBuilder};
 // OmniBox Dependencies
 use omni_box::utils::address::{self, get_uncompressed_bitcoin_pubkey};
 use omni_box::utils::signature;
@@ -100,6 +100,8 @@ async fn test_sighash_p2pkh_btc_signing_remote_with_propagation(
             deposit: 1000000000000000000000000,
         })
         .await?;
+
+    print!("signer_response: {:?}", signer_response);
 
     // Convert the transaction to a hexadecimal string
     let hex_omni_tx = signature::extract_signed_transaction(&signer_response).unwrap();

@@ -1,9 +1,9 @@
 use near_sdk::near;
 use omni_transaction::near::types::U128;
 use omni_transaction::near::types::{Action, BlockHash, PublicKey, TransferAction};
-use omni_transaction::transaction_builder::TransactionBuilder;
-use omni_transaction::transaction_builder::TxBuilder;
-use omni_transaction::types::NEAR;
+use omni_transaction::TransactionBuilder;
+use omni_transaction::TxBuilder;
+use omni_transaction::NEAR;
 
 #[near(contract_state)]
 #[derive(Default)]

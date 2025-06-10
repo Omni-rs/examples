@@ -1,5 +1,5 @@
 use near_sdk::{env, near};
-use omni_transaction::evm::evm_transaction::EVMTransaction;
+use omni_transaction::evm::EVMTransaction;
 
 pub mod external;
 
