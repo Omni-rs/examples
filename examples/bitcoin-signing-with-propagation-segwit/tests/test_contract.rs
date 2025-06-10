@@ -13,13 +13,13 @@ use near_primitives::views::{QueryRequest, TxExecutionStatus};
 use omni_testing_utilities::address::get_public_key_as_bytes;
 use omni_testing_utilities::signature::{create_signature, extract_big_r_and_s};
 // Omni Transaction Dependencies
-use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
     Amount, Hash as OmniHash, LockTime, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid, Version,
     Witness,
 };
-use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
-use omni_transaction::types::BITCOIN;
+use omni_transaction::bitcoin::BitcoinTransaction;
+use omni_transaction::BITCOIN;
+use omni_transaction::{TransactionBuilder, TxBuilder};
 // Omni Testing Utilities
 use omni_testing_utilities::bitcoind::AddressType;
 use omni_testing_utilities::{

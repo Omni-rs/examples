@@ -37,10 +37,22 @@ async fn test_sighash_p2wpkh_btc_multiple_signing_remote() -> Result<(), Box<dyn
 
     btc_test_context.generate_to_derived_address(&derived_address)?;
     btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
+    btc_test_context.generate_to_derived_address(&derived_address)?;
 
     // Now we need to get the UTXO of the NEAR contract, we use scantxoutset to get the first UTXO
     let unspent_utxos = btc_test_context
-        .scan_utxo_for_address_with_count(&derived_address, 2)
+        .scan_utxo_for_address_with_count(&derived_address, 5)
         .unwrap();
 
     // Generate more blocks to avoid issues with confirmations
@@ -145,8 +157,8 @@ async fn test_sighash_p2wpkh_btc_multiple_signing_remote() -> Result<(), Box<dyn
         let signing_action = Action::FunctionCall(Box::new(FunctionCallAction {
             method_name: "sign_sighash_p2wpkh".to_string(),
             args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
-            gas: 100_000_000_000_000,
-            deposit: 1000000000000000000000000,
+            gas: 60_000_000_000_000,
+            deposit: 100000000000000,
         }));
 
         actions.push(signing_action);
