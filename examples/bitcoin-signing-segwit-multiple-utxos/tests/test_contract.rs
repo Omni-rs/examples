@@ -3,12 +3,7 @@ use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::secp256k1::{Message, PublicKey as BitcoinSecp256k1PublicKey, Secp256k1};
 use bitcoin::{ScriptBuf as BitcoinScriptBuf, WPubkeyHash};
 // NEAR Dependencies
-use near_jsonrpc_client::methods;
-use near_jsonrpc_primitives::types::query::QueryResponseKind;
 use near_primitives::action::{Action, FunctionCallAction};
-use near_primitives::transaction::{Transaction, TransactionV0};
-use near_primitives::types::{BlockReference, Finality, FunctionArgs};
-use near_primitives::views::{QueryRequest, TxExecutionStatus};
 // Omni Transaction Dependencies
 use omni_transaction::bitcoin::types::{
     Amount, Hash as OmniHash, LockTime, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid, Version,
@@ -17,7 +12,7 @@ use omni_transaction::bitcoin::types::{
 use omni_transaction::bitcoin::BitcoinTransaction;
 use omni_transaction::{TransactionBuilder, TxBuilder, BITCOIN};
 // OmniBox Dependencies
-use omni_box::utils::address::{self, get_uncompressed_bitcoin_pubkey};
+use omni_box::utils::address::{self};
 use omni_box::utils::signature;
 use omni_box::OmniBox;
 // Other Dependencies
@@ -121,101 +116,47 @@ async fn test_sighash_p2wpkh_btc_multiple_signing_remote() -> Result<(), Box<dyn
             "value": OMNI_SPEND_AMOUNT.to_sat()
         });
 
-        methods::query::RpcQueryRequest {
-            block_reference: BlockReference::Finality(Finality::Final),
-            request: QueryRequest::CallFunction {
-                account_id: omni_box.deployer_account.account_id.clone(),
-                method_name: method_name.to_string(),
-                args: FunctionArgs::from(args.to_string().into_bytes()),
-            },
-        }
+        (method_name, args)
     });
 
-    let responses = join_all(futures.map(|request| near_json_rpc_client.call(request))).await;
+    let responses = join_all(futures.map(|(method_name, args)| {
+        omni_box
+            .friendly_near_json_rpc_client
+            .call_contract::<Vec<u8>>(method_name, args)
+    }))
+    .await;
     let mut actions = Vec::new();
     let mut sighhashes_messages = Vec::new();
 
     for response in responses {
-        match response {
-            Ok(response) => {
-                if let QueryResponseKind::CallResult(call_result) = response.kind {
-                    if let Ok(result_str) = String::from_utf8(call_result.result.clone()) {
-                        // Parse the result
-                        let result_bytes: Vec<u8> = result_str
-                            .trim_matches(|c| c == '[' || c == ']') // Remove brackets
-                            .split(',') // Split by comma
-                            .map(|s| s.trim().parse::<u8>().unwrap()) // Parse each byte
-                            .collect();
+        let sighash_omni = sha256d::Hash::hash(response.unwrap().as_slice());
+        let msg_omni = Message::from_digest_slice(sighash_omni.as_byte_array()).unwrap();
+        sighhashes_messages.push(msg_omni);
 
-                        // Calculate the sighash
-                        let sighash_omni = sha256d::Hash::hash(&result_bytes);
-                        let msg_omni =
-                            Message::from_digest_slice(sighash_omni.as_byte_array()).unwrap();
+        let attached_deposit: u128 = 1;
 
-                        sighhashes_messages.push(msg_omni);
+        // Create the args for the sign_sighash_p2pkh method
+        let args = json!({
+            "sighash_p2wpkh": hex::encode(msg_omni.as_ref()),
+            "attached_deposit": attached_deposit.to_string()
+        });
 
-                        let attached_deposit: u128 = 1;
+        // Create the action
+        let signing_action = Action::FunctionCall(Box::new(FunctionCallAction {
+            method_name: "sign_sighash_p2wpkh".to_string(),
+            args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
+            gas: 100_000_000_000_000,
+            deposit: 1000000000000000000000000,
+        }));
 
-                        // Create the args for the sign_sighash_p2pkh method
-                        let args = json!({
-                            "sighash_p2wpkh": hex::encode(msg_omni.as_ref()),
-                            "attached_deposit": attached_deposit.to_string()
-                        });
-
-                        // Create the action
-                        let signing_action = Action::FunctionCall(Box::new(FunctionCallAction {
-                            method_name: "sign_sighash_p2wpkh".to_string(),
-                            args: args.to_string().into_bytes(), // Convert directly to Vec<u8>
-                            gas: 100_000_000_000_000,
-                            deposit: 1000000000000000000000000,
-                        }));
-
-                        actions.push(signing_action);
-                    }
-                }
-            }
-            Err(e) => {
-                eprintln!("Error: {:?}", e);
-            }
-        }
+        actions.push(signing_action);
     }
 
     // Send the transaction using the actions created
-
-    let result = get_nonce_and_block_hash(
-        &near_json_rpc_client,
-        user_account.account_id.clone(),
-        signer.public_key(),
-    )
-    .await;
-
-    let (nonce, block_hash) = result.unwrap();
-
-    let nonce = nonce + 1;
-
-    // Create the transaction
-    let near_tx: Transaction = Transaction::V0(TransactionV0 {
-        signer_id: user_account.account_id.clone(),
-        public_key: signer.public_key(),
-        nonce,
-        receiver_id: user_account.account_id.clone(),
-        block_hash,
-        actions,
-    });
-
-    // Sign the transaction
-    let signer = &signer.into();
-    let signed_transaction = near_tx.sign(signer);
-
-    // Send the transaction
-    let request: methods::send_tx::RpcSendTransactionRequest =
-        methods::send_tx::RpcSendTransactionRequest {
-            signed_transaction,
-            wait_until: TxExecutionStatus::Final,
-        };
-
-    let signer_response: methods::tx::RpcTransactionResponse =
-        send_transaction(&near_json_rpc_client, request).await?;
+    let signer_response = omni_box
+        .friendly_near_json_rpc_client
+        .send_actions(actions)
+        .await?;
 
     println!("signer_response: {:?}", signer_response);
 
