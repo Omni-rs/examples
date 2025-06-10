@@ -7,13 +7,13 @@ use near_primitives::action::FunctionCallAction;
 use omni_box::utils::address::get_uncompressed_bitcoin_pubkey;
 use omni_box::utils::{address, signature};
 use omni_box::OmniBox;
-use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{
     Amount, Hash as OmniHash, LockTime, OutPoint, ScriptBuf, Sequence, TxIn, TxOut, Txid, Version,
     Witness,
 };
-use omni_transaction::transaction_builder::{TransactionBuilder, TxBuilder};
-use omni_transaction::types::BITCOIN;
+use omni_transaction::bitcoin::BitcoinTransaction;
+use omni_transaction::BITCOIN;
+use omni_transaction::{TransactionBuilder, TxBuilder};
 use reqwest::Client;
 
 use serde_json::json;

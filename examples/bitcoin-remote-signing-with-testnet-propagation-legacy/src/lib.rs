@@ -2,9 +2,9 @@ use near_sdk::env::{self, sha256};
 use near_sdk::Promise;
 use near_sdk::{near, Gas, NearToken, PromiseError};
 
-use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
 use omni_transaction::bitcoin::types::{EcdsaSighashType, ScriptBuf, TransactionType};
 use omni_transaction::bitcoin::utils::{build_script_sig, serialize_ecdsa_signature_from_str};
+use omni_transaction::bitcoin::BitcoinTransaction;
 use omni_transaction::signer::types::{mpc_contract, SignRequest, SignatureResponse};
 pub mod external;
 

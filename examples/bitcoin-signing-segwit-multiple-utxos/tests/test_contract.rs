@@ -191,28 +191,7 @@ async fn test_sighash_p2wpkh_btc_multiple_signing_remote() -> Result<(), Box<dyn
 
                         sighhashes_messages.push(msg_omni);
 
-                        // Get the deposit amount for the mpc signer
-                        let request = methods::query::RpcQueryRequest {
-                            block_reference: Finality::Final.into(),
-                            request: QueryRequest::CallFunction {
-                                account_id: MPC_CONTRACT_ACCOUNT.parse().unwrap(),
-                                method_name: "experimental_signature_deposit".to_string(),
-                                args: FunctionArgs::from(vec![]),
-                            },
-                        };
-
-                        let response = near_json_rpc_client.call(request).await?;
-
-                        let mut attached_deposit: u128 = 0;
-
-                        if let QueryResponseKind::CallResult(result) = response.kind {
-                            // Decode the byte array to a string
-                            let result_str = String::from_utf8(result.result).unwrap();
-                            attached_deposit =
-                                result_str.trim_matches('"').parse::<u128>().unwrap();
-                        } else {
-                            println!("Error getting the attached deposit");
-                        }
+                        let attached_deposit: u128 = 1;
 
                         // Create the args for the sign_sighash_p2pkh method
                         let args = json!({

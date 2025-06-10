@@ -1,5 +1,5 @@
 use near_sdk::ext_contract;
-use omni_transaction::bitcoin::bitcoin_transaction::BitcoinTransaction;
+use omni_transaction::bitcoin::BitcoinTransaction;
 
 #[allow(dead_code)]
 #[ext_contract(this_contract)]

@@ -1085,7 +1085,6 @@ dependencies = [
  "near-primitives 0.25.0",
  "near-sdk",
  "omni-box",
- "omni-testing-utilities",
  "omni-transaction",
  "reqwest",
  "ripemd",
@@ -1110,7 +1109,6 @@ dependencies = [
  "near-primitives 0.25.0",
  "near-sdk",
  "omni-box",
- "omni-testing-utilities",
  "omni-transaction",
  "reqwest",
  "ripemd",
@@ -1158,6 +1156,7 @@ dependencies = [
  "near-primitives 0.25.0",
  "near-sdk",
  "near-workspaces 0.14.1",
+ "omni-box",
  "omni-testing-utilities",
  "omni-transaction",
  "ripemd",
@@ -4560,9 +4559,9 @@ dependencies = [
 
 [[package]]
 name = "omni-box"
-version = "0.1.4"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffa8a1c517f24d42a54dbd1d0d5c7ee7a03b666f7cc6dba6165ee7faf85f5d03"
+checksum = "cf13ccbf3863ca77ef44c3e473a5c28ff884c532ecfa5170ca4616b8c2020029"
 dependencies = [
  "alloy",
  "bitcoin",
@@ -4610,9 +4609,9 @@ dependencies = [
 
 [[package]]
 name = "omni-transaction"
-version = "0.1.3"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f691db7557adeb52bd376199871f5278b776d1b70ce9ad6620f7e806fb93aed"
+checksum = "6298bb213fe2f82b6066d4b729dc77d730c4b272a07a275b2f0eeb6225627d37"
 dependencies = [
  "borsh",
  "bs58 0.5.1",
